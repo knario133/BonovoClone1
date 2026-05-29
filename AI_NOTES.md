@@ -11,9 +11,10 @@
 
 ## 2. Reglas Estrictas del Motor de Vistas (ASP.NET MVC Razor)
 ### 2.1. Gestión de Bloques de Código y Sintaxis
-#### 2.1.1. Obligatoriedad del prefijo `@`
-- Todo bloque condicional o iterativo en C# DEBE iniciar con `@`. 
-- Escribir `if (condición)` sin `@` imprimirá el texto literalmente en el DOM. Forma correcta: `@if (condición)`.
+#### 2.1.1. Gestión del Prefijo `@` (Regla de Contexto)
+- **Modo HTML:** Si estás escribiendo HTML normal y necesitas inyectar C#, usa el arroba (ej. `@if (condición) { ... }`).
+- **Modo C# (Dentro de bloques):** Si YA ESTÁS dentro de un bloque de código C# (como dentro de un `@{ ... }`, un `@using (...) { ... }` o un `@foreach`), **NO uses el `@` para sentencias de control**. Escribe el `if`, `var`, o `foreach` de forma natural como en C# puro.
+- **Traducciones:** NO inventes propiedades en el objeto `@Resources`. Si vas a modificar un texto y no estás seguro de la clave `.resx`, escribe el texto directamente (Hardcode) en español.
 #### 2.1.2. Transiciones de C# a HTML (Cambio de Contexto)
 - Si dentro de un bloque `@if { ... }` se requiere renderizar HTML, envuelve el contenido en etiquetas estándar (`<div>`, `<li>`, `<a>`). 
 - Razor cambiará a HTML automáticamente. **ESTÁ ESTRICTAMENTE PROHIBIDO** usar la etiqueta `<text>` si ya estás usando elementos HTML válidos.
