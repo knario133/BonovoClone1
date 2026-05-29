@@ -1,4 +1,4 @@
-Bonobo Git Server
+﻿Bonobo Git Server
 ==============================================
 
 [![Build status](https://ci.appveyor.com/api/projects/status/4vyllwtb5i645lrt/branch/master?svg=true)](https://ci.appveyor.com/project/jakubgarfield/bonobo-git-server)
@@ -14,102 +14,68 @@ Prerequisites
     * [Installing IIS 8 on Windows Server 2012](http://www.iis.net/learn/get-started/whats-new-in-iis-8/installing-iis-8-on-windows-server-2012)
     * [Installing IIS 7 on Windows Server 2008 or Windows Server 2008 R2](http://www.iis.net/learn/install/installing-iis-7/installing-iis-7-and-above-on-windows-server-2008-or-windows-server-2008-r2)
     * [Installing IIS 7 on Windows Vista and Windows 7](http://www.iis.net/learn/install/installing-iis-7/installing-iis-on-windows-vista-and-windows-7)
-* [.NET Framework 4.6](https://www.microsoft.com/en-gb/download/details.aspx?id=48130)
-    * Windows Vista SP2, Windows 7, Windows 8 and higher
-    * Windows Server 2008 R2, Windows Server 2008 SP2, Windows Server 2012 and higher
-    * Don't forget to register .NET framework with your IIS
-        * Run `%windir%\Microsoft.NET\Framework\v4.0.30319\aspnet_regiis.exe -ir` with administrator privileges
+* ASP.NET MVC 4
+* .NET Framework 4.6
 
-<hr />
-
-
-
-Update
+Links
 -----------------------------------------------
 
-Before each update please read carefully the information about **compatibility issues** between your version and the latest one in [changelog](/changelog.md).
+* [Web page](http://bonobogitserver.com/)
+* [Documentation](http://bonobogitserver.com/documentation/)
+* [Changelog](https://github.com/jakubgarfield/Bonobo-Git-Server/blob/master/changelog.md)
+* [License](https://github.com/jakubgarfield/Bonobo-Git-Server/blob/master/license.md)
 
-* Delete all the files in the installation folder **except App_Data**.
-    * Default location is `C:\inetpub\wwwroot\Bonobo.Git.Server`.
-* Copy the files from the downloaded archive to the server location.
-
-
-<hr />
-
-
-
-Installation
+Build
 -----------------------------------------------
 
-These steps illustrate simple installation with Windows 2008 Server and IIS 7. They are exactly the same for higher platforms (Windows Server 2012 and IIS 8.0).
+Ensure you have downloaded the Git tools using the [get-git.ps1](get-git.ps1) script or by letting Visual Studio restore the nuget packages.
+To do it manually, run `msbuild get-git.msbuild`.
 
-* **Extract the files** from the installation archive to `C:\inetpub\wwwroot`
+You can now build it in Visual Studio or by running `msbuild Bonobo.Git.Server.sln`.
 
-* **Allow IIS User to modify** `C:\inetpub\wwwroot\Bonobo.Git.Server\App_Data` folder. To do so
-    * select Properties of App_Data folder,
-    * go to Security tab, 
-    * click edit, 
-    * select IIS user (in my case IIS_IUSRS) and add Modify and Write permission,
-    * confirm these settings with Apply button.
-
-* **Convert Bonobo.Git.Server to Application** in IIS
-    * Run IIS Manager and navigate to Sites -> Default Web Site. You should see Bonobo.Git.Server.
-    * Right click on Bonobo Git Server and convert to application.
-    * Check if the selected application pool runs on .NET 4.0 and convert the site.
-
-* **Launch your browser** and go to [http://localhost/Bonobo.Git.Server](http://localhost/Bonobo.Git.Server). Now you can see the initial page of Bonobo Git Server and everything is working.
-    * Default credentials are username: **admin** password: **admin**
-
-
-<hr />
-
-
-Frequently Asked Questions
+Features
 -----------------------------------------------
 
-#### How to clone a repository?
+* Git Server
+    * manage users
+    * manage teams
+    * manage repositories
+    * anonymous clone, pull, push
+* Repository Browser
+    * commit history
+    * repository tree
+    * blob detail
+    * commit detail
+    * blame view
+    * zipped repository download
+* Active Directory integration
+* Translated into several languages
 
-* Go to the **Repository Detail**.
-* Copy the value in the **Git Repository Location**.
-    * It should look like `http://servername/projectname.git`.
-* Go to your command line and run `git clone http://servername/projectname.git`.
+## 🎨 Custom UI Modernization (Corporate Edition)
+-----------------------------------------------
+This specific repository includes a highly customized, modernized frontend tailored for secure, air-gapped corporate environments (e.g., VPNs with strict firewall rules and no external internet access).
 
-#### How do I change my password?
+**Key Frontend Upgrades:**
+* **Glassmorphism Dark Mode:** A sleek, frosted-glass UI redesign applied to the master layout, login, and dashboards.
+* **Dynamic Local Wallpapers:** Integration of dynamic Bing backgrounds with a dark readability overlay ensuring high contrast.
+* **100% Local Assets (Zero CDNs):** All frontend dependencies are hosted locally within `~/Librerias/` to comply with strict banking security policies.
+* **Modern Tooling:** Upgraded with Bootstrap 5, FontAwesome 6, DataTables, SweetAlert2, and Toastr.
+* **AI-Assisted Development:** Features an `AI_NOTES.md` strategic manual at the root level to guide LLM agents (like Jules, Cursor, or Copilot) in maintaining ASP.NET MVC Razor syntax rules and strict UI constraints without breaking the backend.
 
-* Click on the **account settings** in the top right corner.
-* Enter new password and confirmation.
-* Save.
+IIS Deployment
+-----------------------------------------------
 
-#### How to backup data?
+1. Extract the release zip file or build the source code
+2. Put the `Bonobo.Git.Server` folder to `C:\inetpub\wwwroot`
+3. Convert `Bonobo.Git.Server` folder to an application in IIS
+4. Make sure that the `App_Data` folder is writable for IIS user
 
-* Go to the installation folder of Bonobo Git Server on the server.
-    * Default location is `C:\inetpub\wwwroot\Bonobo.Git.Server`.
-* Copy the content of App_Data folder to your backup directory.
-* If you changed the location of your repositories, backup them as well.
+For more detailed information, please read the [install guide](http://bonobogitserver.com/install/).
 
-#### How to change repositories folder?
+Environment Variables
+-----------------------------------------------
 
-* Log in as an administrator.
-* Go to **Global Settings**.
-* Set the desired value for the **Repository Directory**.
-    * Directory must exist on the hard drive.
-    * IIS User must have proper permissions to modify the folder.
-* Save changes.    
-
-#### Can I allow anonymous access to a repository?
-
-* Edit the desired repository (or do this when creating the repository).
-* Check **Anonymous** check box.
-* Save.
-
-For allowing anonymous push you have to modify global settings.
-
-* Log in as an administrator.
-* Go to **Global Settings**.
-* Check the value **Allow push for anonymous repositories**
-* Save changes.
-
-#### I'd like to use git hooks to restrict access. How do I access the web frontend usernam?
+Want to add some git hooks? E.g. to automatically run CI on push? But want to know who is the web frontend usernam?
 
 Bonobo provides the following environment variables:
 
@@ -126,5 +92,4 @@ New release
 
 * update [changelog](https://github.com/jakubgarfield/Bonobo-Git-Server/blob/master/changelog.md)
 * update version numbers in [appveyor.yml](https://github.com/jakubgarfield/Bonobo-Git-Server/blob/master/appveyor.yml)
-* add tag so it appears under [releases](https://github.com/jakubgarfield/Bonobo-Git-Server/releases) with `git tag -a 6.0.0 -m "Release 6.0.0"`
-* add zipped version to bonobogitserver.com at [Bonobo-Git-Server-Web](https://github.com/jakubgarfield/Bonobo-Git-Server-Web)
+* add tag so it appears under [releases](https://github.com/jakubgarfield/Bonobo-Git-Server/releases) with `git tag -a 6.0.0 -m "Release ..."`
