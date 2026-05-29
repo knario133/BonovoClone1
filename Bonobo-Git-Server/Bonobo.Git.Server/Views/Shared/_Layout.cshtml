@@ -102,10 +102,25 @@
             justify-content: center;
             min-height: calc(100vh - 4rem);
         }
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        #bg {
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            transition: background-image 1s ease-in-out;
+        }
     </style>
 </head>
 <body class="@HttpContext.Current.Request.RequestContext.RouteData.Values["controller"].ToString() @HttpContext.Current.Request.RequestContext.RouteData.Values["action"].ToString()">
-    <div class="d-flex">
+    <div  id="bg" class="d-flex">
         <nav class="sidebar glass-panel">
             <div class="navigation pure-menu pure-menu-open pure-menu-horizontal">
                 @Html.ActionLink(UserConfiguration.Current.GetSiteTitle(), "", "", null, new { @class = "pure-menu-heading" })
@@ -157,14 +172,52 @@
                         @UserConfiguration.Current.SiteFooterMessage
                         @:&middot;
                     }
-                    Bonobo Git Server (@Html.AssemblyVersion()) &copy; 2019 <a href="http://www.chodounsky.net">Jakub Chodounský</a>
+                    Bonobo Git Server (@Html.AssemblyVersion()) &copy; 2019 <a href="http://www.chodounsky.net">Jakub Chodounský</a><br />
+                    Bonobo Git Server (@Html.AssemblyVersion()) &copy; 2026 <a href="https://github.com/knario133/BonovoClone1">Francisco Castro</a>
                     &middot; <a href="http://bonobogitserver.com/">@Resources.Home</a>
-                    &middot; <a href="https://github.com/jakubgarfield/Bonobo-Git-Server">@Resources.Source</a>
+                    &middot; <a href="https://github.com/knario133/BonovoClone1">@Resources.Source</a>
                 </p>
             </div>
         </main>
     </div>
+    <script>
+   
+        function PullBackground() {
+            var ajaxRequest = new XMLHttpRequest();
 
+            // 1. Necesitamos el proxy CORS y usar GET en lugar de POST
+            var corsProxy = 'https://corsproxy.io/?';
+            var targetUrl = encodeURIComponent("https://www.bing.com/HPImageArchive.aspx?format=xml&idx=0&n=1&mkt=en-US");
+
+            ajaxRequest.open('GET', corsProxy + targetUrl, true);
+
+            // 2. Eliminamos el header "Connection: close" (es un header prohibido en navegadores)
+
+            ajaxRequest.onreadystatechange = function () {
+                // 3. Validamos que la petición haya terminado (4) y sea exitosa (200)
+                if (ajaxRequest.readyState === 4 && ajaxRequest.status === 200) {
+
+                    // 4. Analizamos el XML de forma nativa en lugar de usar split()
+                    var parser = new DOMParser();
+                    var xmlDoc = parser.parseFromString(ajaxRequest.responseText, "text/xml");
+                    var urlTags = xmlDoc.getElementsByTagName("url");
+
+                    if (urlTags.length > 0) {
+                        var background = urlTags[0].textContent;
+
+                        // 5. Usamos HTTPS y cambiamos backgroundSize a 'cover' para que no se deforme
+                        var bgElement = document.getElementById('bg');
+                        bgElement.style.backgroundImage = "url('https://www.bing.com" + background + "')";
+                        bgElement.style.backgroundSize = "cover";
+                    }
+                }
+            };
+
+            // 6. Enviamos la petición sin strings vacíos
+            ajaxRequest.send();
+        }
+        PullBackground(); 
+    </script>
     @Scripts.Render("~/bundledJs")
     @RenderSection("scripts", required: false)
 </body>
