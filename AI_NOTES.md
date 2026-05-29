@@ -55,3 +55,7 @@
 - Convertir la tabla HTML clásica en un DataTable responsivo, oscuro y con estilos de Bootstrap 5.
 #### 4.3.2. Interactividad Visual
 - Añadir efectos *hover* en las filas de la tabla y botones de acción brillantes.
+#### 4.3.3. Transparencia Obligatoria en Tablas (Overrides CSS)
+- Las librerías como DataTables inyectan fondos sólidos por defecto. Tienes la obligación de inyectar un bloque `<style>` en la vista que fuerce `background-color: transparent !important;` en los elementos `table.dataTable`, `tr`, `th` y `td`.
+- Las filas deben tener un efecto hover: `table.dataTable tbody tr:hover { background-color: rgba(255, 255, 255, 0.05) !important; backdrop-filter: blur(5px); }`.
+- Los botones de paginación (`.page-link`) y los inputs del buscador deben tener fondo translúcido oscuro (`rgba(0,0,0,0.4)`) y bordes semitransparentes, nunca blanco sólido.
