@@ -1,171 +1,1237 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="shortcut icon" href="~/favicon.ico?v=2" type="image/x-icon" />
     <title>@ViewBag.Title :: @UserConfiguration.Current.GetSiteTitle()</title>
+
     @Styles.Render("~/Content/bundledCss")
+
+    <!-- Librerías locales agregadas al proyecto -->
+    <link rel="stylesheet" href="@Url.Content("~/Librerias/NormalizeCss/normalize.min.css")" />
+    <link rel="stylesheet" href="@Url.Content("~/Librerias/FontawesomeFree/fontawesome.min.css")" />
+    <link rel="stylesheet" href="@Url.Content("~/Librerias/JsBootstrapBundle/bootstrap.min.css")" />
+    <link rel="stylesheet" href="@Url.Content("~/Librerias/JsDatatables/jquery.dataTables.min.css")" />
+    <link rel="stylesheet" href="@Url.Content("~/Librerias/JsDatatablesSelect/select.dataTables.min.css")" />
+    <link rel="stylesheet" href="@Url.Content("~/Librerias/JsSweetalert2/sweetalert2.min.css")" />
+    <link rel="stylesheet" href="@Url.Content("~/Librerias/ToastrJs/toastr.min.css")" />
+
     @if (UserConfiguration.Current.HasCustomSiteCss)
     {
         <link rel="stylesheet" href="@string.Format("{0}?_={1}", Url.Content(UserConfiguration.Current.SiteCssUrl), DateTime.Now.Ticks)" type="text/css" />
     }
+
     @if (UserConfiguration.Current.HasCustomSiteLogo)
     {
-    <style>
-        .navigation.pure-menu a.pure-menu-heading {
-            background: url('@Url.Content(UserConfiguration.Current.SiteLogoUrl)') no-repeat 0 4px;
-        }
-    </style>
+        <style>
+            .app-brand-logo {
+                background: url('@Url.Content(UserConfiguration.Current.SiteLogoUrl)') no-repeat center center;
+                background-size: contain;
+            }
+        </style>
     }
+
     <style>
-        body {
-            background: linear-gradient(135deg, #0f172a 0%, #2e0854 100%);
-            background-color: rgba(15, 23, 42, 0.85); /* Fallback */
-            color: #f8f9fa;
-            font-family: 'Inter', 'Roboto', sans-serif;
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-        }
-        .d-flex {
-            display: flex;
-            min-height: 100vh;
-        }
-        .flex-grow-1 {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-        }
-        .sidebar {
-            width: 250px;
-            flex-shrink: 0;
-            padding: 1rem;
-        }
-        .glass-panel, .glass-card {
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-        }
-        .glass-card {
-            border-radius: 8px;
-            padding: 2rem;
-        }
-        .content {
-            padding: 2rem;
-            flex-grow: 1;
-        }
-        .footer {
-            padding: 1rem;
-            text-align: center;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(0, 0, 0, 0.2);
-        }
-        a {
-            color: #60a5fa;
-            text-decoration: none;
-        }
-        a:hover {
-            color: #93c5fd;
-            text-decoration: underline;
-        }
-        .sidebar ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        .sidebar li {
-            margin-bottom: 0.5rem;
-        }
-        .sidebar a {
-            display: block;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            color: #e2e8f0;
-        }
-        .sidebar a:hover {
-            background: rgba(255, 255, 255, 0.1);
-            text-decoration: none;
-        }
-        .sidebar .pure-menu-heading {
-            display: block;
-            font-size: 1.25rem;
-            font-weight: bold;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .logon-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: calc(100vh - 4rem);
-        }
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
+        :root {
+            --bg-dark: #07111f;
+            --bg-panel: rgba(12, 22, 35, 0.62);
+            --bg-panel-strong: rgba(12, 22, 35, 0.78);
+            --bg-panel-soft: rgba(255, 255, 255, 0.08);
+            --border-glass: rgba(255, 255, 255, 0.16);
+            --border-glass-strong: rgba(255, 255, 255, 0.26);
+            --text-main: #f8fafc;
+            --text-muted: #cbd5e1;
+            --accent: #60a5fa;
+            --accent-strong: #3b82f6;
+            --danger: #fb7185;
+            --success: #34d399;
+            --sidebar-width: 292px;
+            --content-max-width: 1320px;
+            --blur: 18px;
         }
 
-        #bg {
+        html,
+        body {
             width: 100%;
-            height: 100%;
+            min-height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            color: var(--text-main);
+            font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+            background: radial-gradient(circle at 18% 20%, rgba(96, 165, 250, 0.28), transparent 28%), radial-gradient(circle at 85% 8%, rgba(245, 158, 11, 0.22), transparent 30%), linear-gradient(135deg, #08111f 0%, #162033 48%, #0b1220 100%);
+            overflow-x: hidden;
+        }
+
+            body::before {
+                content: "";
+                position: fixed;
+                inset: 0;
+                z-index: -3;
+                background: rgba(2, 6, 23, 0.18);
+                pointer-events: none;
+            }
+
+        #bg {
+            min-height: 100vh;
+            width: 100%;
             background-size: cover;
-            background-position: center;
-            transition: background-image 1s ease-in-out;
+            background-position: center center;
+            background-attachment: fixed;
+            transition: background-image 700ms ease-in-out;
+            position: relative;
+        }
+
+            #bg::before {
+                content: "";
+                position: fixed;
+                inset: 0;
+                z-index: -2;
+                background: linear-gradient(90deg, rgba(2, 6, 23, 0.80) 0%, rgba(2, 6, 23, 0.34) 34%, rgba(2, 6, 23, 0.18) 100%), linear-gradient(180deg, rgba(2, 6, 23, 0.22) 0%, rgba(2, 6, 23, 0.45) 100%);
+                pointer-events: none;
+            }
+
+        .app-layout {
+            display: flex;
+            min-height: 100vh;
+            align-items: stretch;
+        }
+
+        .sidebar-toggle {
+            position: fixed;
+            top: 46px;
+            left: calc(var(--sidebar-width) + 12px);
+            z-index: 2500;
+            width: 42px;
+            height: 42px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #e2e8f0;
+            background: rgba(15, 23, 42, 0.70);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 14px;
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.30);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            cursor: pointer;
+            transition: left 220ms ease, background-color 170ms ease, border-color 170ms ease, transform 170ms ease;
+        }
+
+            .sidebar-toggle:hover,
+            .sidebar-toggle:focus {
+                color: #ffffff;
+                background: rgba(59, 130, 246, 0.30);
+                border-color: rgba(147, 197, 253, 0.45);
+                outline: none;
+                transform: translateY(-1px);
+            }
+
+        body.sidebar-collapsed .sidebar-toggle {
+            left: 18px;
+        }
+
+        .app-sidebar {
+            width: var(--sidebar-width);
+            flex: 0 0 var(--sidebar-width);
+            padding: 22px 14px 22px 14px;
+            position: sticky;
+            top: 0;
+            align-self: flex-start;
+            height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            transition: width 240ms ease, flex-basis 240ms ease, padding 240ms ease, opacity 200ms ease;
+        }
+
+            .app-sidebar::-webkit-scrollbar {
+                width: 8px;
+            }
+
+            .app-sidebar::-webkit-scrollbar-thumb {
+                background: rgba(148, 163, 184, 0.28);
+                border-radius: 999px;
+            }
+
+        body.sidebar-collapsed .app-sidebar {
+            width: 0;
+            flex-basis: 0;
+            padding-left: 0;
+            padding-right: 0;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .sidebar-glass,
+        .glass-content,
+        .app-footer {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-glass);
+            box-shadow: 0 18px 55px rgba(0, 0, 0, 0.34);
+            backdrop-filter: blur(var(--blur));
+            -webkit-backdrop-filter: blur(var(--blur));
+        }
+
+        .sidebar-glass {
+            min-height: calc(100vh - 44px);
+            border-radius: 0 24px 24px 0;
+            padding: 18px 14px;
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.78) 0%, rgba(2, 6, 23, 0.62) 100%);
+            transition: transform 240ms ease, opacity 200ms ease;
+        }
+
+        body.sidebar-collapsed .sidebar-glass {
+            transform: translateX(-115%);
+            opacity: 0;
+        }
+
+        .brand-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-height: 54px;
+            padding: 8px 10px 16px 10px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .app-brand-logo {
+            width: 34px;
+            height: 34px;
+            min-width: 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            color: #ff5548;
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+        }
+
+            .app-brand-logo i {
+                font-size: 1.45rem;
+            }
+
+        .brand-title {
+            color: #ffffff;
+            font-size: 1.03rem;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            text-decoration: none;
+            line-height: 1.22;
+        }
+
+            .brand-title:hover,
+            .brand-title:focus {
+                color: #ffffff;
+                text-decoration: none;
+            }
+
+        .repo-selector {
+            margin: 0 4px 18px 4px;
+        }
+
+        .glass-label {
+            display: block;
+            margin-bottom: 7px;
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .glass-select,
+        .glass-content select,
+        .glass-content textarea,
+        .glass-content input[type="text"],
+        .glass-content input[type="password"],
+        .glass-content input[type="email"],
+        .glass-content input[type="search"],
+        .glass-content input[type="number"],
+        .glass-content input[type="url"],
+        .glass-content .form-control,
+        .glass-content .form-select {
+            color: #ffffff !important;
+            background-color: rgba(2, 6, 23, 0.42) !important;
+            border: 1px solid rgba(255, 255, 255, 0.26) !important;
+            border-radius: 12px !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 25px rgba(0, 0, 0, 0.14) !important;
+            outline: none !important;
+        }
+
+        .glass-select {
+            min-height: 42px;
+        }
+
+            .glass-select option,
+            .glass-content select option,
+            .glass-content .form-select option {
+                color: #111827;
+                background: #ffffff;
+            }
+
+            .glass-content input:focus,
+            .glass-content select:focus,
+            .glass-content textarea:focus,
+            .glass-select:focus,
+            .glass-content .form-control:focus,
+            .glass-content .form-select:focus {
+                border-color: rgba(96, 165, 250, 0.82) !important;
+                box-shadow: 0 0 0 0.18rem rgba(59, 130, 246, 0.22) !important;
+            }
+
+        .repo-selector.is-enhanced {
+            position: relative;
+        }
+
+            .repo-selector.is-enhanced select.repositories {
+                position: absolute !important;
+                width: 1px !important;
+                height: 1px !important;
+                opacity: 0 !important;
+                pointer-events: none !important;
+                overflow: hidden !important;
+            }
+
+        .glass-combobox {
+            position: relative;
+            width: 100%;
+        }
+
+        .glass-combobox-toggle {
+            width: 100%;
+            min-height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 12px;
+            color: #ffffff;
+            background: rgba(2, 6, 23, 0.44);
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            border-radius: 14px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 10px 26px rgba(0, 0, 0, 0.18);
+            font-weight: 750;
+            line-height: 1.2;
+            text-align: left;
+            cursor: pointer;
+            transition: background-color 170ms ease, border-color 170ms ease, box-shadow 170ms ease;
+        }
+
+            .glass-combobox-toggle:hover,
+            .glass-combobox-toggle:focus {
+                background: rgba(15, 23, 42, 0.66);
+                border-color: rgba(96, 165, 250, 0.65);
+                box-shadow: 0 0 0 0.18rem rgba(59, 130, 246, 0.18), 0 12px 28px rgba(0, 0, 0, 0.18);
+                outline: none;
+            }
+
+            .glass-combobox-toggle i {
+                color: rgba(191, 219, 254, 0.92);
+                font-size: 0.9rem;
+                transition: transform 160ms ease;
+            }
+
+        .glass-combobox.open .glass-combobox-toggle i {
+            transform: rotate(180deg);
+        }
+
+        .glass-combobox-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            z-index: 3200;
+            display: none;
+            max-height: 290px;
+            padding: 7px;
+            overflow-y: auto;
+            background: rgba(15, 23, 42, 0.94);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 16px;
+            box-shadow: 0 20px 46px rgba(0, 0, 0, 0.38);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+        }
+
+        .glass-combobox.open .glass-combobox-menu {
+            display: block;
+        }
+
+        .glass-combobox-option {
+            min-height: 38px;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 9px 10px;
+            color: rgba(241, 245, 249, 0.90);
+            border: 1px solid transparent;
+            border-radius: 12px;
+            font-weight: 650;
+            cursor: pointer;
+            user-select: none;
+        }
+
+            .glass-combobox-option:hover,
+            .glass-combobox-option:focus {
+                color: #ffffff;
+                background: rgba(96, 165, 250, 0.18);
+                border-color: rgba(147, 197, 253, 0.22);
+                outline: none;
+            }
+
+            .glass-combobox-option.is-selected {
+                color: #ffffff;
+                background: rgba(59, 130, 246, 0.28);
+                border-color: rgba(147, 197, 253, 0.30);
+            }
+
+            .glass-combobox-option.is-placeholder {
+                color: rgba(203, 213, 225, 0.72);
+            }
+
+            .glass-combobox-option i {
+                width: 18px;
+                color: rgba(147, 197, 253, 0.95);
+                text-align: center;
+            }
+
+        .glass-combobox-menu::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .glass-combobox-menu::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.35);
+            border-radius: 999px;
+        }
+
+        .sidebar-section-title {
+            color: rgba(226, 232, 240, 0.82);
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin: 20px 10px 8px 10px;
+        }
+
+        .sidebar-nav {
+            gap: 6px;
+        }
+
+            .sidebar-nav .nav-link {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                min-height: 42px;
+                padding: 10px 12px;
+                color: rgba(241, 245, 249, 0.88);
+                border: 1px solid transparent;
+                border-radius: 14px;
+                font-weight: 650;
+                transition: background-color 170ms ease, border-color 170ms ease, color 170ms ease, transform 170ms ease;
+            }
+
+                .sidebar-nav .nav-link i {
+                    width: 20px;
+                    text-align: center;
+                    color: rgba(147, 197, 253, 0.92);
+                }
+
+                .sidebar-nav .nav-link:hover,
+                .sidebar-nav .nav-link:focus {
+                    color: #ffffff;
+                    text-decoration: none;
+                    background: rgba(255, 255, 255, 0.10);
+                    border-color: rgba(255, 255, 255, 0.14);
+                    transform: translateX(2px);
+                }
+
+        body.Repository .sidebar-nav .repository,
+        body.Account .sidebar-nav .users,
+        body.Team .sidebar-nav .teams,
+        body.Settings .sidebar-nav .settings {
+            color: #ffffff;
+            background: rgba(59, 130, 246, 0.24);
+            border-color: rgba(96, 165, 250, 0.34);
+        }
+
+        .sidebar-divider {
+            height: 1px;
+            margin: 16px 8px;
+            background: rgba(255, 255, 255, 0.11);
+        }
+
+        .app-main {
+            flex: 1 1 auto;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            transition: margin 240ms ease;
+        }
+
+        .app-content-wrap {
+            flex: 1 1 auto;
+            padding: 42px clamp(18px, 4vw, 64px) 28px clamp(18px, 4vw, 64px);
+            transition: padding 240ms ease;
+        }
+
+        body.sidebar-collapsed .app-content-wrap {
+            padding-left: clamp(56px, 4vw, 82px);
+            padding-right: clamp(18px, 3vw, 46px);
+        }
+
+        .glass-content {
+            width: min(var(--content-max-width), 100%);
+            min-height: calc(100vh - 160px);
+            margin: 0 auto;
+            padding: clamp(20px, 2.4vw, 34px);
+            border-radius: 26px;
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.66) 0%, rgba(15, 23, 42, 0.54) 100%);
+            font-size: 0.94rem;
+            transition: width 240ms ease, max-width 240ms ease, padding 240ms ease;
+        }
+
+        body.sidebar-collapsed .glass-content {
+            width: min(1600px, 100%);
+        }
+
+        .glass-content h1,
+        .glass-content h2,
+        .glass-content h3,
+        .glass-content h4,
+        .glass-content h5,
+        .glass-content h6,
+        .glass-content label,
+        .glass-content legend {
+            color: #ffffff;
+            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+        }
+
+        .glass-content h1 {
+            margin-top: 0;
+            margin-bottom: 1.05rem;
+            font-size: clamp(1.75rem, 2.15vw, 2.35rem);
+            line-height: 1.12;
+            letter-spacing: -0.025em;
+        }
+
+        .glass-content h2 {
+            font-size: clamp(1.35rem, 1.6vw, 1.72rem);
+            line-height: 1.18;
+        }
+
+        .glass-content h3 {
+            font-size: clamp(1.12rem, 1.25vw, 1.36rem);
+            line-height: 1.22;
+        }
+
+        .glass-content h4 {
+            font-size: 1.04rem;
+        }
+
+        .glass-content h5 {
+            font-size: 0.96rem;
+        }
+
+        .glass-content h6 {
+            font-size: 0.9rem;
+        }
+
+        .glass-content .page-header {
+            margin-top: 0;
+            margin-bottom: 18px;
+            padding-bottom: 12px;
+        }
+
+            .glass-content .page-header h1,
+            .glass-content .page-header h2 {
+                margin-bottom: 0;
+            }
+
+        .glass-content p,
+        .glass-content span,
+        .glass-content li,
+        .glass-content td,
+        .glass-content th,
+        .glass-content small,
+        .glass-content .help-block,
+        .glass-content .text-muted {
+            color: rgba(241, 245, 249, 0.88);
+        }
+
+        .glass-content a:not(.btn) {
+            color: #93c5fd;
+            text-decoration: none;
+        }
+
+            .glass-content a:not(.btn):hover {
+                color: #bfdbfe;
+                text-decoration: underline;
+            }
+
+        .glass-content .page-header,
+        .glass-content .form-actions,
+        .glass-content hr {
+            border-color: rgba(255, 255, 255, 0.16) !important;
+        }
+
+        .glass-content .well,
+        .glass-content .panel,
+        .glass-content .panel-default,
+        .glass-content .list-group-item,
+        .glass-content .card {
+            color: #ffffff;
+            background: rgba(15, 23, 42, 0.46) !important;
+            border-color: rgba(255, 255, 255, 0.14) !important;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+        }
+
+        .glass-content .panel-heading,
+        .glass-content .panel-footer,
+        .glass-content .card-header,
+        .glass-content .card-footer {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.07) !important;
+            border-color: rgba(255, 255, 255, 0.14) !important;
+        }
+
+        .glass-content table,
+        .glass-content .table,
+        .glass-content .dataTable {
+            width: 100%;
+            color: #f8fafc !important;
+            border-color: rgba(255, 255, 255, 0.14) !important;
+        }
+
+            .glass-content table thead th,
+            .glass-content .table thead th,
+            .glass-content .dataTable thead th {
+                color: #dbeafe !important;
+                background: linear-gradient(180deg, rgba(96, 165, 250, 0.34) 0%, rgba(30, 41, 59, 0.72) 100%) !important;
+                border-color: rgba(147, 197, 253, 0.22) !important;
+                border-bottom: 1px solid rgba(191, 219, 254, 0.28) !important;
+                font-size: 0.95rem;
+                font-weight: 800;
+                letter-spacing: 0.018em;
+                text-shadow: 0 1px 8px rgba(0, 0, 0, 0.36);
+                padding: 12px 14px;
+                white-space: nowrap;
+            }
+
+            .glass-content table tbody tr,
+            .glass-content .table tbody tr,
+            .glass-content .dataTable tbody tr {
+                background: rgba(15, 23, 42, 0.30) !important;
+            }
+
+                .glass-content table tbody tr:hover,
+                .glass-content .table tbody tr:hover,
+                .glass-content .dataTable tbody tr:hover {
+                    background: rgba(255, 255, 255, 0.09) !important;
+                }
+
+            .glass-content table td,
+            .glass-content table th,
+            .glass-content .table td,
+            .glass-content .table th {
+                border-color: rgba(255, 255, 255, 0.13) !important;
+                vertical-align: middle;
+            }
+
+            .glass-content table tbody td,
+            .glass-content .table tbody td,
+            .glass-content .dataTable tbody td {
+                color: rgba(241, 245, 249, 0.92) !important;
+                font-size: 0.94rem;
+                padding: 12px 14px;
+            }
+
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            color: rgba(241, 245, 249, 0.88) !important;
+        }
+
+            .dataTables_wrapper .dataTables_paginate .paginate_button {
+                color: #ffffff !important;
+                border: 1px solid rgba(255, 255, 255, 0.18) !important;
+                border-radius: 10px !important;
+                background: rgba(255, 255, 255, 0.06) !important;
+            }
+
+                .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+                .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+                    color: #ffffff !important;
+                    border-color: rgba(96, 165, 250, 0.55) !important;
+                    background: rgba(59, 130, 246, 0.30) !important;
+                }
+
+        table.dataTable thead .sorting,
+        table.dataTable thead .sorting_asc,
+        table.dataTable thead .sorting_desc,
+        table.dataTable thead .sorting_asc_disabled,
+        table.dataTable thead .sorting_desc_disabled {
+            background-color: rgba(30, 41, 59, 0.72) !important;
+            background-blend-mode: screen;
+        }
+
+        .btn,
+        input[type="submit"].btn,
+        button.btn,
+        a.btn,
+        .pure-button {
+            border-radius: 12px !important;
+            font-weight: 700 !important;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+            transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+        }
+
+            .btn:hover,
+            .pure-button:hover {
+                transform: translateY(-1px);
+                text-decoration: none !important;
+            }
+
+        .btn-primary,
+        .btn-outline-primary {
+            color: #93c5fd !important;
+            background-color: transparent !important;
+            border-color: rgba(96, 165, 250, 0.72) !important;
+        }
+
+            .btn-primary:hover,
+            .btn-outline-primary:hover,
+            .btn-primary:focus,
+            .btn-outline-primary:focus {
+                color: #ffffff !important;
+                background-color: rgba(59, 130, 246, 0.88) !important;
+                border-color: rgba(147, 197, 253, 0.92) !important;
+            }
+
+        .btn-default,
+        .btn-secondary,
+        .btn-outline-secondary,
+        .pure-button {
+            color: #e2e8f0 !important;
+            background-color: transparent !important;
+            border: 1px solid rgba(226, 232, 240, 0.45) !important;
+        }
+
+            .btn-default:hover,
+            .btn-secondary:hover,
+            .btn-outline-secondary:hover,
+            .pure-button:hover {
+                color: #ffffff !important;
+                background-color: rgba(226, 232, 240, 0.16) !important;
+                border-color: rgba(255, 255, 255, 0.64) !important;
+            }
+
+        .btn-danger,
+        .btn-outline-danger {
+            color: #fecdd3 !important;
+            background-color: transparent !important;
+            border-color: rgba(251, 113, 133, 0.70) !important;
+        }
+
+            .btn-danger:hover,
+            .btn-outline-danger:hover {
+                color: #ffffff !important;
+                background-color: rgba(225, 29, 72, 0.88) !important;
+            }
+
+        .btn-success,
+        .btn-outline-success {
+            color: #bbf7d0 !important;
+            background-color: transparent !important;
+            border-color: rgba(52, 211, 153, 0.70) !important;
+        }
+
+            .btn-success:hover,
+            .btn-outline-success:hover {
+                color: #052e16 !important;
+                background-color: rgba(52, 211, 153, 0.88) !important;
+            }
+
+        .btn-warning,
+        .btn-outline-warning {
+            color: #fde68a !important;
+            background-color: transparent !important;
+            border-color: rgba(251, 191, 36, 0.72) !important;
+        }
+
+            .btn-warning:hover,
+            .btn-outline-warning:hover {
+                color: #422006 !important;
+                background-color: rgba(251, 191, 36, 0.92) !important;
+            }
+
+        .btn-info,
+        .btn-outline-info {
+            color: #a5f3fc !important;
+            background-color: transparent !important;
+            border-color: rgba(34, 211, 238, 0.70) !important;
+        }
+
+            .btn-info:hover,
+            .btn-outline-info:hover {
+                color: #083344 !important;
+                background-color: rgba(34, 211, 238, 0.88) !important;
+            }
+
+        .alert {
+            color: #ffffff;
+            border-radius: 16px;
+            border-color: rgba(255, 255, 255, 0.16);
+            background: rgba(15, 23, 42, 0.72);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .alert-danger,
+        .validation-summary-errors {
+            border-color: rgba(251, 113, 133, 0.50) !important;
+            background: rgba(127, 29, 29, 0.58) !important;
+        }
+
+        .alert-success {
+            border-color: rgba(52, 211, 153, 0.44) !important;
+            background: rgba(6, 78, 59, 0.58) !important;
+        }
+
+        /* Convierte los mensajes verdes nativos de Bonobo en notificaciones Toastr. */
+        .summary-success {
+            display: none !important;
+        }
+
+        .alert-info {
+            border-color: rgba(56, 189, 248, 0.44) !important;
+            background: rgba(12, 74, 110, 0.58) !important;
+        }
+
+        .dropdown-menu {
+            border-radius: 14px;
+            background: rgba(15, 23, 42, 0.94);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: 0 18px 45px rgba(0, 0, 0, 0.32);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+
+            .dropdown-menu a,
+            .dropdown-menu .dropdown-item {
+                color: #e2e8f0;
+            }
+
+                .dropdown-menu a:hover,
+                .dropdown-menu .dropdown-item:hover {
+                    color: #ffffff;
+                    background: rgba(96, 165, 250, 0.18);
+                }
+
+        .app-footer {
+            width: min(var(--content-max-width), calc(100% - 36px));
+            margin: 0 auto 18px auto;
+            padding: 13px 18px;
+            border-radius: 18px;
+            text-align: center;
+            color: rgba(226, 232, 240, 0.86);
+            background: rgba(2, 6, 23, 0.52);
+            transition: width 240ms ease, max-width 240ms ease;
+        }
+
+        body.sidebar-collapsed .app-footer {
+            width: min(1600px, calc(100% - 36px));
+        }
+
+        .app-footer p {
+            margin: 0;
+            font-size: 0.86rem;
+            line-height: 1.55;
+        }
+
+        .app-footer a {
+            color: #93c5fd;
+            text-decoration: none;
+        }
+
+            .app-footer a:hover {
+                color: #bfdbfe;
+                text-decoration: underline;
+            }
+
+        .swal2-popup {
+            border: 1px solid rgba(255, 255, 255, 0.16) !important;
+            background: rgba(15, 23, 42, 0.92) !important;
+            color: #ffffff !important;
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+        }
+
+        .swal2-title,
+        .swal2-html-container {
+            color: #ffffff !important;
+        }
+
+        /*
+           Toastr estructural embebido.
+           En algunos despliegues bancarios el archivo toastr.min.css no está presente o queda bloqueado.
+           Sin este bloque el JS funciona, pero la notificación queda como un div normal al final del body.
+        */
+        #toast-container {
+            position: fixed !important;
+            z-index: 999999 !important;
+            pointer-events: none;
+        }
+
+            #toast-container.toast-top-right {
+                top: 24px !important;
+                right: 24px !important;
+                left: auto !important;
+                bottom: auto !important;
+            }
+
+            #toast-container.toast-top-left {
+                top: 24px !important;
+                left: 24px !important;
+                right: auto !important;
+                bottom: auto !important;
+            }
+
+            #toast-container.toast-bottom-right {
+                right: 24px !important;
+                bottom: 24px !important;
+                top: auto !important;
+                left: auto !important;
+            }
+
+            #toast-container.toast-bottom-left {
+                left: 24px !important;
+                bottom: 24px !important;
+                top: auto !important;
+                right: auto !important;
+            }
+
+            #toast-container > div {
+                position: relative;
+                width: 360px;
+                min-height: 72px;
+                margin: 0 0 14px 0;
+                padding: 16px 18px 16px 52px;
+                overflow: hidden;
+                color: #ffffff !important;
+                border-radius: 16px !important;
+                box-shadow: 0 18px 45px rgba(0, 0, 0, 0.40) !important;
+                border: 1px solid rgba(255, 255, 255, 0.18) !important;
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+                opacity: 0.98 !important;
+                pointer-events: auto;
+                cursor: default;
+            }
+
+                #toast-container > div::before {
+                    position: absolute;
+                    left: 18px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    font-family: "Font Awesome 6 Free";
+                    font-weight: 900;
+                    font-size: 1.25rem;
+                    line-height: 1;
+                    color: #ffffff;
+                }
+
+            #toast-container > .toast-success {
+                background: linear-gradient(135deg, rgba(6, 78, 59, 0.96), rgba(15, 23, 42, 0.94)) !important;
+                border-left: 4px solid rgba(52, 211, 153, 0.95) !important;
+            }
+
+                #toast-container > .toast-success::before {
+                    content: "\f058";
+                    color: #86efac;
+                }
+
+            #toast-container > .toast-error {
+                background: linear-gradient(135deg, rgba(127, 29, 29, 0.96), rgba(15, 23, 42, 0.94)) !important;
+                border-left: 4px solid rgba(251, 113, 133, 0.95) !important;
+            }
+
+                #toast-container > .toast-error::before {
+                    content: "\f06a";
+                    color: #fda4af;
+                }
+
+            #toast-container > .toast-info {
+                background: linear-gradient(135deg, rgba(12, 74, 110, 0.96), rgba(15, 23, 42, 0.94)) !important;
+                border-left: 4px solid rgba(56, 189, 248, 0.95) !important;
+            }
+
+                #toast-container > .toast-info::before {
+                    content: "\f05a";
+                    color: #7dd3fc;
+                }
+
+            #toast-container > .toast-warning {
+                background: linear-gradient(135deg, rgba(113, 63, 18, 0.96), rgba(15, 23, 42, 0.94)) !important;
+                border-left: 4px solid rgba(251, 191, 36, 0.95) !important;
+            }
+
+                #toast-container > .toast-warning::before {
+                    content: "\f071";
+                    color: #fde68a;
+                }
+
+            #toast-container .toast-close-button {
+                position: absolute;
+                top: 8px;
+                right: 10px;
+                width: 26px;
+                height: 26px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                color: rgba(255, 255, 255, 0.88) !important;
+                background: rgba(255, 255, 255, 0.10) !important;
+                border: 1px solid rgba(255, 255, 255, 0.16) !important;
+                border-radius: 999px;
+                font-size: 1rem;
+                line-height: 1;
+                text-shadow: none;
+                opacity: 1 !important;
+                cursor: pointer;
+            }
+
+                #toast-container .toast-close-button:hover,
+                #toast-container .toast-close-button:focus {
+                    color: #ffffff !important;
+                    background: rgba(255, 255, 255, 0.18) !important;
+                    outline: none;
+                }
+
+            #toast-container .toast-title {
+                padding-right: 28px;
+                font-weight: 800;
+                letter-spacing: 0.01em;
+            }
+
+            #toast-container .toast-message {
+                padding-right: 18px;
+                margin-top: 3px;
+                font-size: 0.95rem;
+                line-height: 1.45;
+                color: rgba(255, 255, 255, 0.92) !important;
+            }
+
+            #toast-container .toast-progress {
+                display: none !important;
+            }
+
+        @@media (max-width: 640px) {
+            #toast-container.toast-top-right,
+            #toast-container.toast-top-left,
+            #toast-container.toast-bottom-right,
+            #toast-container.toast-bottom-left {
+                top: 14px !important;
+                right: 14px !important;
+                left: 14px !important;
+                bottom: auto !important;
+            }
+
+            #toast-container > div {
+                width: auto;
+            }
+        }
+
+        @@media (max-width: 992px) {
+            :root {
+                --sidebar-width: 100%;
+            }
+
+            .app-layout {
+                display: block;
+            }
+
+            .sidebar-toggle,
+            body.sidebar-collapsed .sidebar-toggle {
+                top: 18px;
+                right: 14px;
+                left: auto;
+            }
+
+            .app-sidebar {
+                position: relative;
+                width: 100%;
+                height: auto;
+                padding: 12px;
+            }
+
+            body.sidebar-collapsed .app-sidebar {
+                width: 100%;
+                height: 0;
+                padding-top: 0;
+                padding-bottom: 0;
+                opacity: 0;
+            }
+
+            body.sidebar-collapsed .sidebar-glass {
+                transform: translateY(-115%);
+            }
+
+            .sidebar-glass {
+                min-height: auto;
+                border-radius: 20px;
+            }
+
+            .sidebar-nav {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .app-content-wrap,
+            body.sidebar-collapsed .app-content-wrap {
+                padding: 16px 12px 22px 12px;
+            }
+
+            .glass-content {
+                min-height: auto;
+                padding: 18px;
+                border-radius: 20px;
+            }
+
+                .glass-content h1 {
+                    font-size: 1.65rem;
+                }
+        }
+
+        @@media (max-width: 576px) {
+            .sidebar-nav {
+                grid-template-columns: 1fr;
+            }
+
+            .brand-title {
+                font-size: 0.96rem;
+            }
         }
     </style>
 </head>
 <body class="@HttpContext.Current.Request.RequestContext.RouteData.Values["controller"].ToString() @HttpContext.Current.Request.RequestContext.RouteData.Values["action"].ToString()">
-    <div  id="bg" class="d-flex">
-        <nav class="sidebar glass-panel">
-            <div class="navigation pure-menu pure-menu-open pure-menu-horizontal">
-                @Html.ActionLink(UserConfiguration.Current.GetSiteTitle(), "", "", null, new { @class = "pure-menu-heading" })
+    <div id="bg" class="app-layout">
+        <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-label="Ocultar menú" aria-expanded="true" title="Ocultar menú">
+            <i class="fa-solid fa-bars"></i>
+        </button>
 
-                <ul>
+        <aside class="app-sidebar">
+            <div class="sidebar-glass">
+                <div class="brand-wrap">
+                    <span class="app-brand-logo" aria-hidden="true">
+                        <i class="fa-brands fa-git-alt"></i>
+                    </span>
+                    <a class="brand-title" href="@Url.Action("Index", "Home")">@UserConfiguration.Current.GetSiteTitle()</a>
+                </div>
+
+                @if (Request.IsAuthenticated)
+                {
+                    var items = (IEnumerable<SelectListItem>)Html.ViewBag.PermittedRepositories;
+                    <div class="repo-selector">
+                        <label class="glass-label" for="Repositories">Repositorio</label>
+                        @Html.DropDownList("Repositories", items, Resources.Repository_Go_To_Dropdown, new { @class = "repositories form-select glass-select", onchange = "location.href=this.options[this.selectedIndex].value;" })
+                    </div>
+                }
+
+                <div class="sidebar-section-title">Navegación</div>
+                <ul class="nav nav-pills flex-column sidebar-nav">
                     @if (Request.IsAuthenticated)
                     {
-                        var items = (IEnumerable<SelectListItem>)Html.ViewBag.PermittedRepositories;
-                        <li style="margin-bottom: 1rem;">
-                            @Html.DropDownList("Repositories", items, Resources.Repository_Go_To_Dropdown, new { @class = "repositories form-control", @onChange = "javascript:location.href=this.options[this.selectedIndex].value;", style = "width: 100%; background: rgba(0,0,0,0.4); color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; padding: 0.5rem;" })
+                        <li class="nav-item">
+                            <a href="@Url.Action("Index", "Repository")" class="nav-link repository">
+                                <i class="fa-solid fa-code-branch"></i>
+                                <span>@Resources.Layout_Repositories</span>
+                            </a>
                         </li>
-                        <li><a href="@Url.Action("Index", "Repository")" class="repository"><i class="fa fa-hdd-o"></i> @Resources.Layout_Repositories</a></li>
                     }
+
                     @if (User.IsInRole(Definitions.Roles.Administrator))
                     {
-                        <li><a href="@Url.Action("Index", "Account")" class="users"><i class="fa fa-user"></i> @Resources.Layout_AdministrationUsers</a></li>
-                        <li><a href="@Url.Action("Index", "Team")" class="teams"><i class="fa fa-group"></i> @Resources.Layout_AdministrationTeams</a></li>
-                        <li><a href="@Url.Action("Index", "Settings")" class="settings"><i class="fa fa-gears"></i> @Resources.Layout_AdministrationGlobalSettings</a></li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("Index", "Account")" class="nav-link users">
+                                <i class="fa-solid fa-user-gear"></i>
+                                <span>@Resources.Layout_AdministrationUsers</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("Index", "Team")" class="nav-link teams">
+                                <i class="fa-solid fa-users"></i>
+                                <span>@Resources.Layout_AdministrationTeams</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("Index", "Settings")" class="nav-link settings">
+                                <i class="fa-solid fa-gears"></i>
+                                <span>@Resources.Layout_AdministrationGlobalSettings</span>
+                            </a>
+                        </li>
                     }
+                </ul>
+
+                <div class="sidebar-divider"></div>
+                <div class="sidebar-section-title">Sesión</div>
+                <ul class="nav nav-pills flex-column sidebar-nav">
                     @if (Request.IsAuthenticated)
                     {
-                        <li class="separator"><a href="@Url.Action("Edit", "Account", new { id = User.Id() })"><i class="fa fa-male"></i> @User.DisplayName()</a></li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("Edit", "Account", new { id = User.Id() })" class="nav-link">
+                                <i class="fa-solid fa-user"></i>
+                                <span>@User.DisplayName()</span>
+                            </a>
+                        </li>
+
                         if (!User.IsWindowsAuthenticated())
                         {
-                            <li><a href="@Url.Action("LogOff", "Home")"><i class="fa fa-sign-out"></i> @Resources.Layout_LogOff</a></li>
+                            <li class="nav-item">
+                                <a href="@Url.Action("LogOff", "Home")" class="nav-link">
+                                    <i class="fa-solid fa-right-from-bracket"></i>
+                                    <span>@Resources.Layout_LogOff</span>
+                                </a>
+                            </li>
                         }
                     }
                     else
                     {
-                        <li><a href="@Url.Action("LogOn", "Home", new { id = User.Id() })"><i class="fa fa-sign-in"></i> @Resources.Layout_LogOn</a></li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("LogOn", "Home")" class="nav-link">
+                                <i class="fa-solid fa-right-to-bracket"></i>
+                                <span>@Resources.Layout_LogOn</span>
+                            </a>
+                        </li>
+
                         if (UserConfiguration.Current.AllowAnonymousRegistration)
                         {
-                            <li><a href="@Url.Action("Create", "Account")"><i class="fa fa-pencil"></i> @Resources.Layout_Register</a></li>
+                            <li class="nav-item">
+                                <a href="@Url.Action("Create", "Account")" class="nav-link">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                    <span>@Resources.Layout_Register</span>
+                                </a>
+                            </li>
                         }
                     }
                 </ul>
             </div>
-        </nav>
+        </aside>
 
-        <main class="flex-grow-1">
-            <div class="content" id="@ViewContext.ViewData["PageID"]">
-                @RenderBody()
+        <main class="app-main">
+            <div class="app-content-wrap" id="@ViewContext.ViewData["PageID"]">
+                <section class="glass-content">
+                    @RenderBody()
+                </section>
             </div>
 
-            <div class="footer">
+            <footer class="app-footer">
                 <p>
                     @if (UserConfiguration.Current.HasSiteFooterMessage)
                     {
@@ -177,48 +1243,426 @@
                     &middot; <a href="http://bonobogitserver.com/">@Resources.Home</a>
                     &middot; <a href="https://github.com/knario133/BonovoClone1">@Resources.Source</a>
                 </p>
-            </div>
+            </footer>
         </main>
     </div>
+
+    @Scripts.Render("~/bundledJs")
+
     <script>
-   
-        function PullBackground() {
-            var ajaxRequest = new XMLHttpRequest();
+        window.jQuery || document.write('<script src="@Url.Content("~/Librerias/JsDatatables/jquery.min.js")"><\/script>');
+    </script>
+    <script src="@Url.Content("~/Librerias/FontawesomeFree/all.min.js")"></script>
+    <script src="@Url.Content("~/Librerias/JsBootstrapBundle/bootstrap.bundle.min.js")"></script>
+    <script src="@Url.Content("~/Librerias/JsDatatables/jquery.dataTables.min.js")"></script>
+    <script src="@Url.Content("~/Librerias/JsDatatablesSelect/dataTables.select.min.js")"></script>
+    <script src="@Url.Content("~/Librerias/JsSweetalert2/sweetalert2.all.min.js")"></script>
+    <script src="@Url.Content("~/Librerias/ToastrJs/toastr.min.js")"></script>
 
-            // 1. Necesitamos el proxy CORS y usar GET en lugar de POST
-            var corsProxy = 'https://corsproxy.io/?';
-            var targetUrl = encodeURIComponent("https://www.bing.com/HPImageArchive.aspx?format=xml&idx=0&n=1&mkt=en-US");
+    <script>
+        (function () {
+            function applyOutlineButtons() {
+                var replacements = {
+                    "btn-primary": "btn-outline-primary",
+                    "btn-secondary": "btn-outline-secondary",
+                    "btn-default": "btn-outline-secondary",
+                    "btn-success": "btn-outline-success",
+                    "btn-danger": "btn-outline-danger",
+                    "btn-warning": "btn-outline-warning",
+                    "btn-info": "btn-outline-info"
+                };
 
-            ajaxRequest.open('GET', corsProxy + targetUrl, true);
+                document.querySelectorAll(".btn").forEach(function (button) {
+                    Object.keys(replacements).forEach(function (sourceClass) {
+                        if (button.classList.contains(sourceClass)) {
+                            button.classList.remove(sourceClass);
+                            button.classList.add(replacements[sourceClass]);
+                        }
+                    });
+                });
 
-            // 2. Eliminamos el header "Connection: close" (es un header prohibido en navegadores)
+                document.querySelectorAll(".glass-content input[type='submit']:not(.btn), .glass-content button:not(.btn)").forEach(function (button) {
+                    if (button.classList.contains("glass-combobox-toggle") || button.classList.contains("sidebar-toggle")) {
+                        return;
+                    }
 
-            ajaxRequest.onreadystatechange = function () {
-                // 3. Validamos que la petición haya terminado (4) y sea exitosa (200)
-                if (ajaxRequest.readyState === 4 && ajaxRequest.status === 200) {
+                    button.classList.add("btn", "btn-outline-primary");
+                });
 
-                    // 4. Analizamos el XML de forma nativa en lugar de usar split()
+                document.querySelectorAll(".pure-button").forEach(function (button) {
+                    button.classList.add("btn", "btn-outline-secondary");
+                });
+            }
+
+            function enhanceTables() {
+                if (!window.jQuery || !jQuery.fn || !jQuery.fn.DataTable) {
+                    return;
+                }
+
+                jQuery("table[data-datatable='true'], table.js-datatable").each(function () {
+                    var table = jQuery(this);
+
+                    if (jQuery.fn.DataTable.isDataTable(this)) {
+                        return;
+                    }
+
+                    table.DataTable({
+                        pageLength: 25,
+                        language: {
+                            decimal: ",",
+                            thousands: ".",
+                            emptyTable: "No hay datos disponibles",
+                            info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
+                            infoEmpty: "Mostrando 0 a 0 de 0 registros",
+                            infoFiltered: "(filtrado de _MAX_ registros totales)",
+                            lengthMenu: "Mostrar _MENU_ registros",
+                            loadingRecords: "Cargando...",
+                            processing: "Procesando...",
+                            search: "Buscar:",
+                            zeroRecords: "No se encontraron resultados",
+                            paginate: {
+                                first: "Primero",
+                                last: "Último",
+                                next: "Siguiente",
+                                previous: "Anterior"
+                            },
+                            select: {
+                                rows: {
+                                    _: "%d filas seleccionadas",
+                                    0: "",
+                                    1: "1 fila seleccionada"
+                                }
+                            }
+                        }
+                    });
+                });
+            }
+
+            function initSummarySuccessToastr() {
+                if (!window.toastr) {
+                    return;
+                }
+
+                toastr.options = {
+                    closeButton: true,
+                    debug: false,
+                    newestOnTop: true,
+                    progressBar: false,
+                    positionClass: "toast-top-right",
+                    preventDuplicates: true,
+                    onclick: null,
+                    showDuration: "180",
+                    hideDuration: "220",
+                    timeOut: 0,
+                    extendedTimeOut: 0,
+                    tapToDismiss: false,
+                    showEasing: "swing",
+                    hideEasing: "linear",
+                    showMethod: "fadeIn",
+                    hideMethod: "fadeOut",
+                    escapeHtml: true
+                };
+
+                var existingContainer = document.getElementById("toast-container");
+                if (existingContainer) {
+                    existingContainer.classList.remove("toast-top-left", "toast-bottom-left", "toast-bottom-right");
+                    existingContainer.classList.add("toast-top-right");
+                }
+
+                function normalizeMessage(element) {
+                    return (element.textContent || "")
+                        .replace(/\s+/g, " ")
+                        .trim();
+                }
+
+                function showToastFromElement(element) {
+                    if (!element || element.dataset.toastrProcessed === "true") {
+                        return;
+                    }
+
+                    element.dataset.toastrProcessed = "true";
+
+                    var message = normalizeMessage(element);
+                    element.style.display = "none";
+
+                    if (message.length > 0) {
+                        toastr.success(message, "Operación exitosa");
+                    }
+                }
+
+                document.querySelectorAll(".summary-success").forEach(showToastFromElement);
+
+                if (window.MutationObserver) {
+                    var observer = new MutationObserver(function (mutations) {
+                        mutations.forEach(function (mutation) {
+                            Array.prototype.slice.call(mutation.addedNodes || []).forEach(function (node) {
+                                if (!node || node.nodeType !== 1) {
+                                    return;
+                                }
+
+                                if (node.classList && node.classList.contains("summary-success")) {
+                                    showToastFromElement(node);
+                                }
+
+                                if (node.querySelectorAll) {
+                                    node.querySelectorAll(".summary-success").forEach(showToastFromElement);
+                                }
+                            });
+                        });
+                    });
+
+                    observer.observe(document.body, { childList: true, subtree: true });
+                }
+            }
+
+            function enhanceRepositorySelects() {
+                document.querySelectorAll("select.repositories").forEach(function (select) {
+                    if (select.dataset.glassEnhanced === "true") {
+                        return;
+                    }
+
+                    var wrapper = select.closest(".repo-selector") || select.parentElement;
+                    var combo = document.createElement("div");
+                    var toggle = document.createElement("button");
+                    var label = document.createElement("span");
+                    var icon = document.createElement("i");
+                    var menu = document.createElement("div");
+
+                    combo.className = "glass-combobox";
+                    toggle.type = "button";
+                    toggle.className = "glass-combobox-toggle";
+                    toggle.setAttribute("aria-haspopup", "listbox");
+                    toggle.setAttribute("aria-expanded", "false");
+
+                    label.className = "glass-combobox-text";
+                    icon.className = "fa-solid fa-chevron-down";
+                    icon.setAttribute("aria-hidden", "true");
+
+                    menu.className = "glass-combobox-menu";
+                    menu.setAttribute("role", "listbox");
+
+                    toggle.appendChild(label);
+                    toggle.appendChild(icon);
+                    combo.appendChild(toggle);
+                    combo.appendChild(menu);
+
+                    function selectedText() {
+                        if (select.selectedIndex >= 0 && select.options[select.selectedIndex]) {
+                            return select.options[select.selectedIndex].text;
+                        }
+
+                        return select.getAttribute("data-placeholder") || "Go to repository";
+                    }
+
+                    function closeCombo() {
+                        combo.classList.remove("open");
+                        toggle.setAttribute("aria-expanded", "false");
+                    }
+
+                    function openCombo() {
+                        document.querySelectorAll(".glass-combobox.open").forEach(function (opened) {
+                            if (opened !== combo) {
+                                opened.classList.remove("open");
+                                var openedToggle = opened.querySelector(".glass-combobox-toggle");
+                                if (openedToggle) {
+                                    openedToggle.setAttribute("aria-expanded", "false");
+                                }
+                            }
+                        });
+
+                        combo.classList.add("open");
+                        toggle.setAttribute("aria-expanded", "true");
+                    }
+
+                    function refreshSelectedState() {
+                        label.textContent = selectedText();
+
+                        menu.querySelectorAll(".glass-combobox-option").forEach(function (item) {
+                            item.classList.toggle("is-selected", Number(item.dataset.index) === select.selectedIndex);
+                        });
+                    }
+
+                    Array.prototype.slice.call(select.options).forEach(function (option, index) {
+                        var item = document.createElement("div");
+                        var itemIcon = document.createElement("i");
+                        var itemText = document.createElement("span");
+
+                        item.className = "glass-combobox-option";
+                        item.setAttribute("role", "option");
+                        item.setAttribute("tabindex", "0");
+                        item.dataset.index = index;
+
+                        if (!option.value) {
+                            item.classList.add("is-placeholder");
+                            itemIcon.className = "fa-solid fa-compass";
+                        } else {
+                            itemIcon.className = "fa-solid fa-code-branch";
+                        }
+
+                        itemText.textContent = option.text;
+
+                        item.appendChild(itemIcon);
+                        item.appendChild(itemText);
+
+                        function chooseOption() {
+                            select.selectedIndex = index;
+                            refreshSelectedState();
+                            closeCombo();
+
+                            if (!option.value) {
+                                return;
+                            }
+
+                            var changeEvent;
+
+                            if (typeof Event === "function") {
+                                changeEvent = new Event("change", { bubbles: true });
+                            } else {
+                                changeEvent = document.createEvent("HTMLEvents");
+                                changeEvent.initEvent("change", true, false);
+                            }
+
+                            select.dispatchEvent(changeEvent);
+                        }
+
+                        item.addEventListener("click", chooseOption);
+                        item.addEventListener("keydown", function (event) {
+                            if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                chooseOption();
+                            }
+                        });
+
+                        menu.appendChild(item);
+                    });
+
+                    toggle.addEventListener("click", function (event) {
+                        event.preventDefault();
+
+                        if (combo.classList.contains("open")) {
+                            closeCombo();
+                        } else {
+                            openCombo();
+                        }
+                    });
+
+                    toggle.addEventListener("keydown", function (event) {
+                        if (event.key === "Escape") {
+                            closeCombo();
+                        }
+
+                        if (event.key === "ArrowDown") {
+                            event.preventDefault();
+                            openCombo();
+                            var selected = menu.querySelector(".glass-combobox-option.is-selected") || menu.querySelector(".glass-combobox-option");
+                            if (selected) {
+                                selected.focus();
+                            }
+                        }
+                    });
+
+                    document.addEventListener("click", function (event) {
+                        if (!combo.contains(event.target)) {
+                            closeCombo();
+                        }
+                    });
+
+                    select.addEventListener("change", refreshSelectedState);
+
+                    select.dataset.glassEnhanced = "true";
+                    wrapper.classList.add("is-enhanced");
+                    select.insertAdjacentElement("afterend", combo);
+                    refreshSelectedState();
+                });
+            }
+
+            function initSidebarToggle() {
+                var toggle = document.getElementById("sidebarToggle");
+                var storageKey = "bonobo.sidebar.collapsed";
+
+                if (!toggle) {
+                    return;
+                }
+
+                function applyState(collapsed, persist) {
+                    document.body.classList.toggle("sidebar-collapsed", collapsed);
+                    toggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+                    toggle.setAttribute("aria-label", collapsed ? "Mostrar menú" : "Ocultar menú");
+                    toggle.setAttribute("title", collapsed ? "Mostrar menú" : "Ocultar menú");
+
+                    var icon = toggle.querySelector("i");
+                    if (icon) {
+                        icon.className = collapsed ? "fa-solid fa-angles-right" : "fa-solid fa-bars";
+                    }
+
+                    if (persist) {
+                        try {
+                            window.localStorage.setItem(storageKey, collapsed ? "true" : "false");
+                        } catch (e) {
+                            // En entornos restringidos, localStorage puede no estar disponible.
+                        }
+                    }
+                }
+
+                var collapsed = false;
+
+                try {
+                    collapsed = window.localStorage.getItem(storageKey) === "true";
+                } catch (e) {
+                    collapsed = false;
+                }
+
+                applyState(collapsed, false);
+
+                toggle.addEventListener("click", function () {
+                    applyState(!document.body.classList.contains("sidebar-collapsed"), true);
+                });
+            }
+
+            function pullBackground() {
+                var bgElement = document.getElementById("bg");
+
+                if (!bgElement) {
+                    return;
+                }
+
+                var ajaxRequest = new XMLHttpRequest();
+                var corsProxy = "https://corsproxy.io/?";
+                var targetUrl = encodeURIComponent("https://www.bing.com/HPImageArchive.aspx?format=xml&idx=0&n=1&mkt=en-US");
+
+                ajaxRequest.open("GET", corsProxy + targetUrl, true);
+                ajaxRequest.onreadystatechange = function () {
+                    if (ajaxRequest.readyState !== 4 || ajaxRequest.status !== 200) {
+                        return;
+                    }
+
                     var parser = new DOMParser();
                     var xmlDoc = parser.parseFromString(ajaxRequest.responseText, "text/xml");
                     var urlTags = xmlDoc.getElementsByTagName("url");
 
                     if (urlTags.length > 0) {
-                        var background = urlTags[0].textContent;
-
-                        // 5. Usamos HTTPS y cambiamos backgroundSize a 'cover' para que no se deforme
-                        var bgElement = document.getElementById('bg');
-                        bgElement.style.backgroundImage = "url('https://www.bing.com" + background + "')";
-                        bgElement.style.backgroundSize = "cover";
+                        bgElement.style.backgroundImage = "url('https://www.bing.com" + urlTags[0].textContent + "')";
                     }
-                }
-            };
+                };
 
-            // 6. Enviamos la petición sin strings vacíos
-            ajaxRequest.send();
-        }
-        PullBackground(); 
+                ajaxRequest.onerror = function () {
+                    bgElement.style.backgroundImage = "none";
+                };
+
+                ajaxRequest.send();
+            }
+
+            document.addEventListener("DOMContentLoaded", function () {
+                initSidebarToggle();
+                enhanceRepositorySelects();
+                applyOutlineButtons();
+                enhanceTables();
+                initSummarySuccessToastr();
+                pullBackground();
+            });
+        })();
     </script>
-    @Scripts.Render("~/bundledJs")
+
     @RenderSection("scripts", required: false)
 </body>
 </html>

@@ -4,43 +4,492 @@
     ViewBag.Title = @Resources.Home_LogOn_Title;
 }
 
-<div class="logon-container">
-    <div class="glass-card" style="max-width: 400px; width: 100%;">
-        <h1 style="text-align: center; margin-bottom: 1.5rem;">@Resources.Home_LogOn_Title</h1>
+<style>
+    /* Vista LogOn: el layout mantiene el fondo global, pero aquí evitamos
+       que el panel principal gigante se coma la intención visual del login. */
+    .glass-content:has(.bonobo-login-page),
+    body.login-view-active .glass-content {
+        width: min(1080px, 100%);
+        min-height: calc(100vh - 190px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: clamp(18px, 3vw, 34px);
+        background: transparent !important;
+        border-color: transparent !important;
+        box-shadow: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
 
-        @using (Html.BeginForm("LogOn", "Home", FormMethod.Post, new { @class = "pure-form pure-form-aligned", style = "display: flex; flex-direction: column; gap: 1rem;" }))
-        {
-            @Html.AntiForgeryToken()
-            @Html.ValidationSummary(false, Resources.Home_LogOn_Failed, new { style = "color: #ef4444;" })
+    body.login-view-active .app-content-wrap {
+        padding-top: clamp(28px, 5vh, 58px);
+    }
 
-            <fieldset style="border: none; padding: 0; margin: 0;">
-                <div class="pure-control-group" style="margin-bottom: 1rem;">
-                    @Html.LabelFor(m => m.Username, new { style = "display: block; margin-bottom: 0.5rem;" })
-                    @Html.TextBoxFor(m => m.Username, new { autofocus = "", style = "width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: #fff;" })
-                    <div style="color: #ef4444; font-size: 0.875rem;">@Html.ValidationMessageFor(m => m.Username)</div>
-                </div>
-                <div class="pure-control-group" style="margin-bottom: 1rem;">
-                    @Html.LabelFor(m => m.Password, new { accesskey = "p", style = "display: block; margin-bottom: 0.5rem;" })
-                    @Html.PasswordFor(m => m.Password, new { @class = "textInput small", style = "width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: #fff;" })
-                    <div style="color: #ef4444; font-size: 0.875rem;">@Html.ValidationMessageFor(m => m.Password)</div>
-                </div>
-                <div class="pure-control-group" style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                    @Html.CheckBoxFor(m => m.RememberMe)
-                    @Html.LabelFor(m => m.RememberMe, new { style = "margin: 0;" })
-                    <div style="color: #ef4444; font-size: 0.875rem;">@Html.ValidationMessageFor(m => m.RememberMe)</div>
-                </div>
-                @Html.HiddenFor(m => m.ReturnUrl)
-                @if (Model.DatabaseResetCode != 0)
-                {
-                    @Html.TextBoxFor(m => m.DatabaseResetCode, new { style = "width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: #fff; margin-bottom: 1rem;" })
-                }
-                <div class="pure-controls" style="margin-top: 1.5rem; text-align: center;">
-                    <button type="submit" class="pure-button pure-button-primary" style="width: 100%; padding: 0.75rem; border-radius: 4px; background: #3b82f6; color: #fff; border: none; font-weight: bold; cursor: pointer;"><i class="fa fa-sign-in"></i> @Resources.Home_LogOn_LogOn</button>
-                </div>
-                <div class="pure-controls" style="margin-top: 1rem; text-align: center; font-size: 0.875rem;">
-                    @Html.ActionLink(Resources.Home_LogOn_ForgotPassword, "ForgotPassword", null, new { style = "color: #93c5fd;" })
-                </div>
-            </fieldset>
+    .bonobo-login-page {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .bonobo-login-card {
+        width: min(920px, 100%);
+        display: grid;
+        grid-template-columns: minmax(270px, 0.86fr) minmax(340px, 1.14fr);
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.17);
+        border-radius: 28px;
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.78) 0%, rgba(15, 23, 42, 0.58) 52%, rgba(30, 41, 59, 0.68) 100%);
+        box-shadow: 0 28px 75px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(22px);
+        -webkit-backdrop-filter: blur(22px);
+    }
+
+    .login-brand-panel {
+        position: relative;
+        min-height: 470px;
+        padding: 34px 30px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        overflow: hidden;
+        border-right: 1px solid rgba(255, 255, 255, 0.12);
+        background: radial-gradient(circle at 20% 18%, rgba(96, 165, 250, 0.34), transparent 31%), radial-gradient(circle at 92% 78%, rgba(245, 158, 11, 0.22), transparent 32%), linear-gradient(180deg, rgba(2, 6, 23, 0.18), rgba(2, 6, 23, 0.40));
+    }
+
+        .login-brand-panel::before {
+            content: "";
+            position: absolute;
+            inset: auto -70px -95px auto;
+            width: 240px;
+            height: 240px;
+            border-radius: 999px;
+            background: rgba(96, 165, 250, 0.16);
+            filter: blur(6px);
+            pointer-events: none;
         }
+
+    .login-brand-top,
+    .login-brand-bottom {
+        position: relative;
+        z-index: 1;
+    }
+
+    .login-logo-row {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        margin-bottom: 26px;
+    }
+
+    .login-logo-badge {
+        width: 46px;
+        height: 46px;
+        min-width: 46px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 16px;
+        color: #ff5548;
+        background: rgba(255, 255, 255, 0.10);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 12px 25px rgba(0, 0, 0, 0.22);
+    }
+
+        .login-logo-badge i {
+            font-size: 1.45rem;
+        }
+
+    .login-product-name {
+        margin: 0;
+        color: #ffffff;
+        font-size: 1.06rem;
+        font-weight: 800;
+        line-height: 1.15;
+    }
+
+    .login-product-kicker {
+        display: block;
+        margin-top: 2px;
+        color: rgba(191, 219, 254, 0.82);
+        font-size: 0.78rem;
+        font-weight: 750;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .login-brand-title {
+        margin: 0 0 12px 0;
+        color: #ffffff;
+        font-size: clamp(1.55rem, 2.2vw, 2.15rem);
+        font-weight: 800;
+        line-height: 1.08;
+        letter-spacing: -0.035em;
+        text-shadow: 0 16px 34px rgba(0, 0, 0, 0.40);
+    }
+
+    .login-brand-copy {
+        max-width: 300px;
+        margin: 0;
+        color: rgba(226, 232, 240, 0.84);
+        font-size: 0.94rem;
+        line-height: 1.55;
+    }
+
+    .login-feature-list {
+        display: grid;
+        gap: 10px;
+        margin: 28px 0 0 0;
+        padding: 0;
+        list-style: none;
+    }
+
+        .login-feature-list li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: rgba(241, 245, 249, 0.84);
+            font-size: 0.88rem;
+            font-weight: 650;
+        }
+
+        .login-feature-list i {
+            width: 26px;
+            height: 26px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9px;
+            color: #bfdbfe;
+            background: rgba(96, 165, 250, 0.15);
+            border: 1px solid rgba(147, 197, 253, 0.16);
+            font-size: 0.82rem;
+        }
+
+    .login-brand-bottom {
+        color: rgba(203, 213, 225, 0.76);
+        font-size: 0.78rem;
+        line-height: 1.45;
+    }
+
+    .login-form-panel {
+        padding: clamp(32px, 4vw, 48px);
+        display: flex;
+        align-items: center;
+    }
+
+    .bonobo-login-form-wrap {
+        width: 100%;
+        max-width: 420px;
+        margin: 0 auto;
+    }
+
+    .login-title {
+        margin: 0 0 8px 0 !important;
+        color: #ffffff;
+        font-size: clamp(1.78rem, 2.4vw, 2.45rem) !important;
+        font-weight: 850 !important;
+        line-height: 1.08 !important;
+        letter-spacing: -0.035em;
+        text-align: left;
+    }
+
+    .login-subtitle {
+        margin: 0 0 28px 0;
+        color: rgba(226, 232, 240, 0.78);
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    .bonobo-login-form {
+        display: grid;
+        gap: 18px;
+    }
+
+    .login-field {
+        display: grid;
+        gap: 8px;
+    }
+
+        .login-field label {
+            margin: 0;
+            color: rgba(241, 245, 249, 0.92) !important;
+            font-size: 0.86rem;
+            font-weight: 800;
+            letter-spacing: 0.01em;
+        }
+
+    .login-input-wrap {
+        position: relative;
+    }
+
+        .login-input-wrap .login-field-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 2;
+            color: rgba(147, 197, 253, 0.92);
+            font-size: 0.95rem;
+            pointer-events: none;
+        }
+
+    .glass-content .login-input {
+        width: 100%;
+        min-height: 48px;
+        padding: 11px 14px 11px 44px !important;
+        border-radius: 15px !important;
+        font-weight: 650;
+        color: #ffffff !important;
+        background: rgba(2, 6, 23, 0.40) !important;
+        border: 1px solid rgba(255, 255, 255, 0.24) !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 12px 26px rgba(0, 0, 0, 0.18) !important;
+    }
+
+        .glass-content .login-input::placeholder {
+            color: rgba(203, 213, 225, 0.52);
+        }
+
+    .login-check-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 34px;
+    }
+
+        .login-check-row input[type="checkbox"] {
+            width: 17px;
+            height: 17px;
+            accent-color: #3b82f6;
+            cursor: pointer;
+        }
+
+        .login-check-row label {
+            margin: 0;
+            color: rgba(241, 245, 249, 0.88) !important;
+            font-size: 0.9rem;
+            font-weight: 650;
+            cursor: pointer;
+            text-shadow: none;
+        }
+
+    .login-submit-row {
+        display: grid;
+        gap: 14px;
+        margin-top: 4px;
+    }
+
+    .login-submit {
+        width: 100%;
+        min-height: 48px;
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border-radius: 15px !important;
+        font-size: 0.98rem;
+    }
+
+    .login-forgot-link {
+        display: inline-flex;
+        justify-content: center;
+        color: #93c5fd !important;
+        font-size: 0.88rem;
+        font-weight: 700;
+        text-decoration: none !important;
+    }
+
+        .login-forgot-link:hover,
+        .login-forgot-link:focus {
+            color: #bfdbfe !important;
+            text-decoration: underline !important;
+        }
+
+    .validation-summary-valid.login-validation {
+        display: none !important;
+    }
+
+    .login-validation {
+        margin: 0 0 18px 0;
+        padding: 12px 14px;
+        border-radius: 15px;
+        font-size: 0.88rem;
+    }
+
+        .login-validation ul {
+            margin: 8px 0 0 18px;
+            padding: 0;
+        }
+
+    .field-validation-valid {
+        display: none !important;
+    }
+
+    .field-validation,
+    .field-validation-error {
+        min-height: 18px;
+        color: #fecdd3 !important;
+        font-size: 0.78rem;
+        font-weight: 700;
+    }
+
+    @@media (max-width: 860px) {
+        .bonobo-login-card {
+            grid-template-columns: 1fr;
+        }
+
+        .login-brand-panel {
+            min-height: auto;
+            padding: 28px 26px;
+            border-right: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .login-feature-list,
+        .login-brand-bottom {
+            display: none;
+        }
+
+        .login-form-panel {
+            padding: 30px 24px 34px 24px;
+        }
+    }
+
+    @@media (max-width: 520px) {
+        .glass-content:has(.bonobo-login-page),
+        body.login-view-active .glass-content {
+            padding-left: 12px;
+            padding-right: 12px;
+        }
+
+        .bonobo-login-card {
+            border-radius: 22px;
+        }
+
+        .login-title {
+            text-align: center;
+        }
+
+        .login-subtitle {
+            text-align: center;
+        }
+    }
+</style>
+
+<div class="bonobo-login-page">
+    <div class="bonobo-login-card">
+        <aside class="login-brand-panel" aria-label="Bonobo Git Server">
+            <div class="login-brand-top">
+                <div class="login-logo-row">
+                    <span class="login-logo-badge">
+                        <i class="fa fa-code-fork" aria-hidden="true"></i>
+                    </span>
+                    <div>
+                        <p class="login-product-name">@UserConfiguration.Current.GetSiteTitle()</p>
+                        <span class="login-product-kicker">Git Server</span>
+                    </div>
+                </div>
+
+                <h2 class="login-brand-title">Acceso seguro al repositorio</h2>
+                <p class="login-brand-copy">
+                    Administra repositorios, equipos y usuarios desde una interfaz más clara, moderna y preparada para entornos internos.
+                </p>
+
+                <ul class="login-feature-list">
+                    <li><i class="fa fa-shield" aria-hidden="true"></i><span>Sesión protegida</span></li>
+                    <li><i class="fa fa-users" aria-hidden="true"></i><span>Gestión de equipos</span></li>
+                    <li><i class="fa fa-code" aria-hidden="true"></i><span>Repositorios centralizados</span></li>
+                </ul>
+            </div>
+
+            <div class="login-brand-bottom">
+                Bonobo Git Server modernizado para una experiencia visual tipo glass, manteniendo compatibilidad con ASP.NET MVC clásico.
+            </div>
+        </aside>
+
+        <section class="login-form-panel" aria-label="Formulario de inicio de sesión">
+            <div class="bonobo-login-form-wrap">
+                <h1 class="login-title">@Resources.Home_LogOn_Title</h1>
+                <p class="login-subtitle">Ingresa tus credenciales para continuar.</p>
+
+                @using (Html.BeginForm("LogOn", "Home", FormMethod.Post, new { @class = "bonobo-login-form", autocomplete = "on" }))
+                {
+                    @Html.AntiForgeryToken()
+                    @Html.ValidationSummary(false, Resources.Home_LogOn_Failed, new { @class = "alert alert-danger login-validation" })
+
+                    <div class="login-field">
+                        @Html.LabelFor(m => m.Username)
+                        <div class="login-input-wrap">
+                            <i class="fa fa-user login-field-icon" aria-hidden="true"></i>
+                            @Html.TextBoxFor(m => m.Username, new { @class = "form-control login-input", autofocus = "autofocus", autocomplete = "username" })
+                        </div>
+                        @Html.ValidationMessageFor(m => m.Username, "", new { @class = "field-validation" })
+                    </div>
+
+                    <div class="login-field">
+                        @Html.LabelFor(m => m.Password, new { accesskey = "p" })
+                        <div class="login-input-wrap">
+                            <i class="fa fa-lock login-field-icon" aria-hidden="true"></i>
+                            @Html.PasswordFor(m => m.Password, new { @class = "form-control login-input", autocomplete = "current-password" })
+                        </div>
+                        @Html.ValidationMessageFor(m => m.Password, "", new { @class = "field-validation" })
+                    </div>
+
+                    <div class="login-check-row">
+                        @Html.CheckBoxFor(m => m.RememberMe)
+                        @Html.LabelFor(m => m.RememberMe)
+                        @Html.ValidationMessageFor(m => m.RememberMe, "", new { @class = "field-validation" })
+                    </div>
+
+                    @Html.HiddenFor(m => m.ReturnUrl)
+
+                    if (Model.DatabaseResetCode != 0)
+                    {
+                        <div class="login-field">
+                            @Html.LabelFor(m => m.DatabaseResetCode)
+                            <div class="login-input-wrap">
+                                <i class="fa fa-key login-field-icon" aria-hidden="true"></i>
+                                @Html.TextBoxFor(m => m.DatabaseResetCode, new { @class = "form-control login-input", autocomplete = "off" })
+                            </div>
+                            @Html.ValidationMessageFor(m => m.DatabaseResetCode, "", new { @class = "field-validation" })
+                        </div>
+                    }
+
+                    <div class="login-submit-row">
+                        <button type="submit" class="btn btn-outline-primary login-submit">
+                            <i class="fa fa-sign-in" aria-hidden="true"></i>
+                            <span>@Resources.Home_LogOn_LogOn</span>
+                        </button>
+
+                        @Html.ActionLink(Resources.Home_LogOn_ForgotPassword, "ForgotPassword", null, new { @class = "login-forgot-link" })
+                    </div>
+                }
+            </div>
+        </section>
     </div>
 </div>
+
+@section scripts {
+    <script>(function () {
+            function activateLoginView() {
+                document.body.classList.add("login-view-active");
+
+                var mainPanel = document.querySelector(".glass-content");
+                if (mainPanel) {
+                    mainPanel.classList.add("glass-content-login");
+                }
+
+                var username = document.querySelector("input[name='Username']");
+                if (username && !username.value) {
+                    username.focus();
+                }
+            }
+
+            if (document.readyState === "loading") {
+                document.addEventListener("DOMContentLoaded", activateLoginView);
+            } else {
+                activateLoginView();
+            }
+        })();</script>
+}
