@@ -1,10 +1,36 @@
-﻿<!DOCTYPE html>
-<html lang="en">
 <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta charset="utf-8" />
-    <link rel="shortcut icon" href="~/favicon.ico?v=2" type="image/x-icon" />
-    <title>@ViewBag.Title :: @UserConfiguration.Current.GetSiteTitle()</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewBag.Title - @UserConfiguration.Current.GetSiteTitle()</title>
+    <link href="~/Content/librerias/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/Content/librerias/all.min.css" rel="stylesheet" />
+    <link href="~/Content/librerias/dataTables.bootstrap5.min.css" rel="stylesheet" />
+
+    <style>
+        body { font-family: 'Inter', 'Roboto', sans-serif; background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); background-color: #0f172a; background-attachment: fixed; color: #e2e8f0; margin: 0; padding: 0; display: flex; min-height: 100vh; overflow-x: hidden; position: relative; }
+        body::before { content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(15, 23, 42, 0.85); z-index: -1; }
+        .glass-panel { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .sidebar { width: 280px; height: 100vh; position: fixed; left: 0; top: 0; padding: 1.5rem 1rem; display: flex; flex-direction: column; border-right: 1px solid rgba(255, 255, 255, 0.1); z-index: 1000; }
+        .main-content { margin-left: 280px; flex-grow: 1; padding: 2rem; min-height: 100vh; width: calc(100% - 280px); }
+        @media (max-width: 768px) { .sidebar { width: 100%; height: auto; position: relative; min-height: auto; border-right: none; border-bottom: 1px solid rgba(255, 255, 255, 0.1); } .main-content { margin-left: 0; width: 100%; padding: 1rem; } body { flex-direction: column; } }
+        .sidebar .nav-link { color: rgba(255, 255, 255, 0.8); border-radius: 8px; margin-bottom: 0.5rem; transition: all 0.3s ease; display: flex; align-items: center; gap: 12px; padding: 0.75rem 1rem; text-decoration: none; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { background: rgba(255, 255, 255, 0.1); color: #fff; transform: translateX(5px); }
+        .sidebar .site-title { font-size: 1.5rem; font-weight: 700; color: #fff; text-decoration: none; margin-bottom: 2rem; display: block; text-align: center; }
+        .sidebar-user-section { margin-top: auto; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.1); }
+        .repo-dropdown-container { margin-bottom: 1.5rem; }
+        .repo-dropdown-container select { width: 100%; background: rgba(0, 0, 0, 0.5); color: white; border: 1px solid rgba(255, 255, 255, 0.2); padding: 0.5rem; border-radius: 8px; }
+        .repo-dropdown-container select option { background: #0f172a; color: white; }
+        .content-card { padding: 2rem; margin-bottom: 2rem; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); }
+        @media (max-width: 768px) { .content-card { padding: 1rem; } }
+        .footer { margin-top: 3rem; text-align: center; font-size: 0.85rem; color: rgba(255, 255, 255, 0.5); }
+        .footer a { color: rgba(255, 255, 255, 0.7); text-decoration: none; transition: color 0.3s ease; }
+        .footer a:hover { color: #fff; }
+        .btn-primary { background-color: #0d6efd; border-color: #0d6efd; }
+        .btn-success { background-color: #198754; border-color: #198754; }
+        .btn-danger { background-color: #dc3545; border-color: #dc3545; }
+        .w-20px { width: 20px; text-align: center; }
+    </style>
+
     @Styles.Render("~/Content/bundledCss")
     @if (UserConfiguration.Current.HasCustomSiteCss)
     {
@@ -13,52 +39,83 @@
     @if (UserConfiguration.Current.HasCustomSiteLogo)
     {
     <style>
-        .navigation.pure-menu a.pure-menu-heading {
-            background: url('@Url.Content(UserConfiguration.Current.SiteLogoUrl)') no-repeat 0 4px;
+        .sidebar .site-title {
+            background: url('@Url.Content(UserConfiguration.Current.SiteLogoUrl)') no-repeat center top;
+            padding-top: 50px;
+            background-size: contain;
         }
     </style>
     }
 </head>
 <body class="@HttpContext.Current.Request.RequestContext.RouteData.Values["controller"].ToString() @HttpContext.Current.Request.RequestContext.RouteData.Values["action"].ToString()">
-    <div class="main">
-        <div class="header">
-            <div class="navigation pure-menu pure-menu-open pure-menu-horizontal">
-                @Html.ActionLink(UserConfiguration.Current.GetSiteTitle(), "", "", null, new { @class = "pure-menu-heading" })
 
-                <ul>
-                    @if (Request.IsAuthenticated)
+    <!-- Sidebar -->
+    <nav class="sidebar glass-panel">
+        @Html.ActionLink(UserConfiguration.Current.GetSiteTitle(), "", "", null, new { @class = "site-title" })
+
+        @if (Request.IsAuthenticated)
+        {
+            <div class="repo-dropdown-container">
+                @{ var items = (IEnumerable<SelectListItem>)Html.ViewBag.PermittedRepositories; }
+                @Html.DropDownList("Repositories", items, Resources.Repository_Go_To_Dropdown, new { @class = "form-select form-select-sm glass-panel text-white shadow-none", @onChange = "javascript:location.href=this.options[this.selectedIndex].value;" })
+            </div>
+        }
+
+        <ul class="nav flex-column mb-auto">
+            @if (Request.IsAuthenticated)
+            {
+                <li class="nav-item">
+                    <a href="@Url.Action("Index", "Repository")" class="nav-link"><i class="fa-solid fa-hard-drive w-20px"></i> @Resources.Layout_Repositories</a>
+                </li>
+            }
+            @if (User.IsInRole(Definitions.Roles.Administrator))
+            {
+                <li class="nav-item">
+                    <a href="@Url.Action("Index", "Account")" class="nav-link"><i class="fa-solid fa-user w-20px"></i> @Resources.Layout_AdministrationUsers</a>
+                </li>
+                <li class="nav-item">
+                    <a href="@Url.Action("Index", "Team")" class="nav-link"><i class="fa-solid fa-users w-20px"></i> @Resources.Layout_AdministrationTeams</a>
+                </li>
+                <li class="nav-item">
+                    <a href="@Url.Action("Index", "Settings")" class="nav-link"><i class="fa-solid fa-gear w-20px"></i> @Resources.Layout_AdministrationGlobalSettings</a>
+                </li>
+            }
+
+            @if (!Request.IsAuthenticated)
+            {
+                <li class="nav-item">
+                    <a href="@Url.Action("LogOn", "Home", new { id = User.Id() })" class="nav-link"><i class="fa-solid fa-right-to-bracket w-20px"></i> @Resources.Layout_LogOn</a>
+                </li>
+                @if (UserConfiguration.Current.AllowAnonymousRegistration)
+                {
+                    <li class="nav-item">
+                        <a href="@Url.Action("Create", "Account")" class="nav-link"><i class="fa-solid fa-pen w-20px"></i> @Resources.Layout_Register</a>
+                    </li>
+                }
+            }
+        </ul>
+
+        @if (Request.IsAuthenticated)
+        {
+            <div class="sidebar-user-section">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a href="@Url.Action("Edit", "Account", new { id = User.Id() })" class="nav-link"><i class="fa-solid fa-user-circle w-20px"></i> @User.DisplayName()</a>
+                    </li>
+                    @if (!User.IsWindowsAuthenticated())
                     {
-                        var items = (IEnumerable<SelectListItem>)Html.ViewBag.PermittedRepositories;
-                        @Html.DropDownList("Repositories", items, Resources.Repository_Go_To_Dropdown, new { @class = "repositories", @onChange = "javascript:location.href=this.options[this.selectedIndex].value;" });
-                        <li><a href="@Url.Action("Index", "Repository")" class="repository"><i class="fa fa-hdd-o"></i> @Resources.Layout_Repositories</a></li>
-                    }
-                    @if (User.IsInRole(Definitions.Roles.Administrator))
-                    {
-                        <li><a href="@Url.Action("Index", "Account")" class="users"><i class="fa fa-user"></i> @Resources.Layout_AdministrationUsers</a></li>
-                        <li><a href="@Url.Action("Index", "Team")" class="teams"><i class="fa fa-group"></i> @Resources.Layout_AdministrationTeams</a></li>
-                        <li><a href="@Url.Action("Index", "Settings")" class="settings"><i class="fa fa-gears"></i> @Resources.Layout_AdministrationGlobalSettings</a></li>
-                    }
-                    @if (Request.IsAuthenticated)
-                    {
-                        <li class="separator"><a href="@Url.Action("Edit", "Account", new { id = User.Id() })"><i class="fa fa-male"></i> @User.DisplayName()</a></li>
-                        if (!User.IsWindowsAuthenticated())
-                        {
-                            <li><a href="@Url.Action("LogOff", "Home")"><i class="fa fa-sign-out"></i> @Resources.Layout_LogOff</a></li>
-                        }
-                    }
-                    else
-                    {
-                        <li><a href="@Url.Action("LogOn", "Home", new { id = User.Id() })"><i class="fa fa-sign-in"></i> @Resources.Layout_LogOn</a></li>
-                        if (UserConfiguration.Current.AllowAnonymousRegistration)
-                        {
-                            <li><a href="@Url.Action("Create", "Account")"><i class="fa fa-pencil"></i> @Resources.Layout_Register</a></li>
-                        }
+                        <li class="nav-item">
+                            <a href="@Url.Action("LogOff", "Home")" class="nav-link text-danger"><i class="fa-solid fa-right-from-bracket w-20px"></i> @Resources.Layout_LogOff</a>
+                        </li>
                     }
                 </ul>
             </div>
-        </div>
+        }
+    </nav>
 
-        <div class="content" id="@ViewContext.ViewData["PageID"]">
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="content-card glass-panel" id="@ViewContext.ViewData["PageID"]">
             @RenderBody()
         </div>
 
@@ -71,10 +128,14 @@
                 }
                 Bonobo Git Server (@Html.AssemblyVersion()) &copy; 2019 <a href="http://www.chodounsky.net">Jakub Chodounský</a>
                 &middot; <a href="http://bonobogitserver.com/">@Resources.Home</a> 
-                &middot; <a href="https://github.com/jakubgarfield/Bonobo-Git-Server">@Resources.Source</a>
             </p>
         </div>
-    </div>
+    </main>
+
+    <script src="~/Scripts/librerias/jquery.min.js"></script>
+    <script src="~/Scripts/librerias/bootstrap.bundle.min.js"></script>
+    <script src="~/Scripts/librerias/jquery.dataTables.min.js"></script>
+    <script src="~/Scripts/librerias/dataTables.bootstrap5.min.js"></script>
 
     @Scripts.Render("~/bundledJs")
     @RenderSection("scripts", required: false)

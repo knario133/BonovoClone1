@@ -1,42 +1,94 @@
-﻿@using System.Collections.Concurrent
+@using System.Collections.Concurrent
 @model Bonobo.Git.Server.Models.LogOnModel
 @{
     ViewBag.Title = @Resources.Home_LogOn_Title;
 }
 
-<h1>@Resources.Home_LogOn_Title</h1>
+<style>
+    /* Scoped styles for the login form to ensure it occupies the full height and centers content */
+    .login-wrapper { min-height: calc(100vh - 150px); display: flex; align-items: center; justify-content: center; }
+    .login-card { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; width: 100%; max-width: 450px; padding: 2.5rem; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); }
+    .login-card h1 { font-size: 2rem; font-weight: 700; margin-bottom: 2rem; text-align: center; color: #fff; }
+    .login-card .form-control { border: 1px solid rgba(255, 255, 255, 0.2); color: #fff !important; }
+    .login-card .form-control:focus { background: rgba(0, 0, 0, 0.6); border-color: #0d6efd; box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25); }
+    .login-card .form-label { color: rgba(255, 255, 255, 0.8); font-weight: 500; }
+    .login-card .field-validation-error { color: #dc3545; font-size: 0.875em; margin-top: 0.25rem; display: block; }
+    .login-card .validation-summary-errors { color: #dc3545; background: rgba(220, 53, 69, 0.1); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; border: 1px solid rgba(220, 53, 69, 0.2); }
+    .login-card .validation-summary-errors ul { margin: 0; padding-left: 1.5rem; }
+    .login-card em { color: #dc3545; font-style: normal; margin-left: 4px; }
+    .login-card a { color: #0d6efd; text-decoration: none; transition: color 0.3s; }
+    .login-card a:hover { color: #0b5ed7; text-decoration: underline; }
 
-@using (Html.BeginForm("LogOn", "Home", FormMethod.Post, new { @class = "pure-form pure-form-aligned" }))
-{
-    @Html.AntiForgeryToken()
-    @Html.ValidationSummary(false, Resources.Home_LogOn_Failed)
+    /* Bootstrap 5 specific classes used in LogOn if library isn't fully loaded */
+    .mb-3 { margin-bottom: 1rem; }
+    .mb-4 { margin-bottom: 1.5rem; }
+    .mt-3 { margin-top: 1rem; }
+    .w-100 { width: 100%; }
+    .d-grid { display: grid; }
+    .gap-2 { gap: 0.5rem; }
+    .text-center { text-align: center; }
+    .text-light { color: #f8f9fa !important; }
+    .bg-transparent { background-color: transparent !important; }
+    .btn { display: inline-block; padding: 0.375rem 0.75rem; font-size: 1rem; border-radius: 0.375rem; text-align: center; cursor: pointer; border: 1px solid transparent; }
+    .btn-primary { color: #fff; background-color: #0d6efd; border-color: #0d6efd; }
+    .form-control { display: block; width: 100%; padding: 0.375rem 0.75rem; font-size: 1rem; border: 1px solid #ced4da; border-radius: 0.375rem; box-sizing: border-box; }
+    .form-label { margin-bottom: 0.5rem; display: inline-block; }
+    .form-check { display: block; min-height: 1.5rem; padding-left: 1.5em; margin-bottom: 0.125rem; }
+    .form-check-input { width: 1em; height: 1em; margin-top: 0.25em; vertical-align: top; margin-left: -1.5em; }
+    .text-decoration-none { text-decoration: none; }
+    .small { font-size: 0.875em; }
+    .opacity-75 { opacity: 0.75; }
+</style>
 
-    <fieldset>
-        <div class="pure-control-group">
-            @Html.LabelFor(m => m.Username)
-            @Html.TextBoxFor(m => m.Username, new { autofocus = "" })<em>*</em>
-            @Html.ValidationMessageFor(m => m.Username)
-        </div>
-        <div class="pure-control-group">
-            @Html.LabelFor(m => m.Password, new { accesskey = "p" })
-            @Html.PasswordFor(m => m.Password, new { @class = "textInput small" })<em>*</em>
-            @Html.ValidationMessageFor(m => m.Password)
-        </div>
-        <div class="pure-control-group">
-            @Html.LabelFor(m => m.RememberMe)
-            @Html.CheckBoxFor(m => m.RememberMe)
-            @Html.ValidationMessageFor(m => m.RememberMe)
-        </div>
-        @Html.HiddenFor(m => m.ReturnUrl)
-        @if (Model.DatabaseResetCode != 0)
+<div class="login-wrapper">
+    <div class="login-card">
+        <h1>@Resources.Home_LogOn_Title</h1>
+
+        @using (Html.BeginForm("LogOn", "Home", FormMethod.Post))
         {
-            @Html.TextBoxFor(m => m.DatabaseResetCode)
+            @Html.AntiForgeryToken()
+
+            if (ViewData.ModelState.Any(x => x.Value.Errors.Any()))
+            {
+                <div class="alert alert-danger bg-transparent border-danger text-danger">
+                    @Html.ValidationSummary(false, Resources.Home_LogOn_Failed)
+                </div>
+            }
+
+            <div class="mb-3">
+                @Html.LabelFor(m => m.Username, new { @class = "form-label" }) <em>*</em>
+                @Html.TextBoxFor(m => m.Username, new { @class = "form-control bg-transparent text-light", autofocus = "autofocus" })
+                @Html.ValidationMessageFor(m => m.Username)
+            </div>
+
+            <div class="mb-3">
+                @Html.LabelFor(m => m.Password, new { @class = "form-label", accesskey = "p" }) <em>*</em>
+                @Html.PasswordFor(m => m.Password, new { @class = "form-control bg-transparent text-light" })
+                @Html.ValidationMessageFor(m => m.Password)
+            </div>
+
+            <div class="mb-4 form-check">
+                @Html.CheckBoxFor(m => m.RememberMe, new { @class = "form-check-input" })
+                @Html.LabelFor(m => m.RememberMe, new { @class = "form-check-label text-light" })
+                @Html.ValidationMessageFor(m => m.RememberMe)
+            </div>
+
+            @Html.HiddenFor(m => m.ReturnUrl)
+
+            @if (Model != null && Model.DatabaseResetCode != 0)
+            {
+                @Html.TextBoxFor(m => m.DatabaseResetCode, new { @class = "form-control bg-transparent text-light mb-3" })
+            }
+
+            <div class="d-grid gap-2 mb-3">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fa-solid fa-right-to-bracket me-2"></i> @Resources.Home_LogOn_LogOn
+                </button>
+            </div>
+
+            <div class="text-center mt-3">
+                @Html.ActionLink(Resources.Home_LogOn_ForgotPassword, "ForgotPassword", null, new { @class = "small text-decoration-none text-light opacity-75" })
+            </div>
         }
-        <div class="pure-controls">
-            <button type="submit" class="pure-button pure-button-primary"><i class="fa fa-sign-in"></i> @Resources.Home_LogOn_LogOn</button>
-        </div>
-        <div class="pure-controls">
-            @Html.ActionLink(Resources.Home_LogOn_ForgotPassword, "ForgotPassword")
-        </div>
-    </fieldset>
-}
+    </div>
+</div>
