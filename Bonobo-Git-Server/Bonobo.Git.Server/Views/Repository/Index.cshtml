@@ -27,13 +27,13 @@
     }
 }
 
-<div class="pure-g">
-    <div class="pure-u-2-5">
+<div class="view-toolbar">
+    <div>
         <h1>
             @Resources.Repository_Index_Title
         </h1>
     </div>
-    <div class="pure-u-3-5 add">
+    <div class="view-actions">
         @{
             var sortGroupQuery = Request.QueryString["sortGroup"];
 
@@ -90,12 +90,10 @@
     </div>
 }
 
-@using (Html.BeginForm(null, null, FormMethod.Post, new { @class = "pure-form" }))
+@using (Html.BeginForm(null, null, FormMethod.Post, new { @class = "pure-form repository-search" }))
 {
-    <p>
-        @Html.TextBox("SearchString")
-        <input type="submit" value="@Resources.Search" class="pure-button pure-button-primary" />
-    </p>
+    @Html.TextBox("SearchString")
+    <input type="submit" value="@Resources.Search" class="pure-button pure-button-primary" />
 }
 
 <div class="pure-g">
@@ -114,7 +112,7 @@
                 </div>
             }
             // https://dusted.codes/making-font-awesome-awesome-using-icons-without-i-tags
-            <div class="pure-u-1">
+            <div class="pure-u-1 table-glass-wrap">
                 @{
                     var permitted = new WebGrid(source: model.Value, defaultSort: "Name", rowsPerPage: 15);
 

@@ -5,7 +5,7 @@
 }
 <h1>@Resources.Team_Create_Title</h1>
 
-@using (Html.BeginForm("Create", "Team", FormMethod.Post, new { @class = "pure-form pure-form-aligned" }))
+@using (Html.BeginForm("Create", "Team", FormMethod.Post, new { @class = "pure-form pure-form-aligned glass-section" }))
 {
     @Html.AntiForgeryToken()
     @Html.ValidationSummary(false, Resources.Team_Create_Fail)

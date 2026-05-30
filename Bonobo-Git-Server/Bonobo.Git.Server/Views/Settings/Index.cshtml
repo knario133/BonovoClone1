@@ -14,7 +14,7 @@
     </div>
 }
 
-@using (Html.BeginForm("Index", "Settings", FormMethod.Post, new { @class = "pure-form pure-form-aligned" }))
+@using (Html.BeginForm("Index", "Settings", FormMethod.Post, new { @class = "pure-form pure-form-aligned glass-section" }))
 {
     @Html.AntiForgeryToken()
     @Html.ValidationSummary(false, Resources.Settings_Index_Failed)

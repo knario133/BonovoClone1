@@ -4,11 +4,11 @@
     ViewBag.Title = Resources.Account_Index_Title;
 }
 
-<div class="pure-g">
-    <div class="pure-u-3-5">
+<div class="view-toolbar">
+    <div>
         <h1>@Resources.Account_Index_Title</h1>
     </div>
-    <div class="pure-u-2-5 add">
+    <div class="view-actions">
         @if (!User.IsWindowsAuthenticated() && !Model.IsReadOnly)
         {
             <a class="pure-button pure-button-primary" href="@Url.Action("Create")"><i class="fa fa-plus-circle"></i> @Resources.Account_Index_Create</a>
@@ -42,8 +42,11 @@
 
 @{
     var grid = new WebGrid(source: Model, defaultSort: "Username", rowsPerPage: 15);
+}
+
+<div class="table-glass-wrap">
     @grid.GetHtml(
-        tableStyle: "pure-table users",
+        tableStyle: "pure-table users js-datatable",
         columns: grid.Columns(
         grid.Column("Username", header: typeof(UserDetailModel).GetDisplayValue("Username"), format: (item) => Html.ActionLink((string)item.Username, "Detail", new { id = item.Id }, new { @class = "detail" })),
         grid.Column("Name", typeof(UserDetailModel).GetDisplayValue("Name")),
@@ -53,4 +56,4 @@
             grid.Column(format: (item) => item.IsReadOnly ? Html.Raw(String.Empty) : Html.ActionLink(" ", "Delete", new { id = item.Id }, new { @class = "delete", title = Resources.Grid_Delete }), style: "action")
         )
     )
-}
+</div>

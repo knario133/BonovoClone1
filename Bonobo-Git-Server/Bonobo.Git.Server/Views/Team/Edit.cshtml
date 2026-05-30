@@ -19,7 +19,7 @@ else
         </div>
     }
 
-    @using (Html.BeginForm("Edit", "Team", FormMethod.Post, new { @class = "pure-form pure-form-aligned" }))
+    @using (Html.BeginForm("Edit", "Team", FormMethod.Post, new { @class = "pure-form pure-form-aligned glass-section" }))
     {
         @Html.AntiForgeryToken()
         @Html.ValidationSummary(false, Resources.Team_Edit_Failure)
