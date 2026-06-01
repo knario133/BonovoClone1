@@ -8,6 +8,8 @@
     <title>@ViewBag.Title :: @UserConfiguration.Current.GetSiteTitle()</title>
 
     @Styles.Render("~/Content/bundledCss")
+    <link rel="stylesheet" href="@Url.Content("~/Content/vendor/highlightjs/monokai-sublime.min.css")?v=11.11.1" />
+    <link rel="stylesheet" href="@Url.Content("~/Content/Site.css")?v=blob-viewer-20260601g" />
 
     <!-- Librerías locales agregadas al proyecto -->
     <link rel="stylesheet" href="@Url.Content("~/Librerias/NormalizeCss/normalize.min.css")" />
@@ -46,7 +48,7 @@
             --danger: #fb7185;
             --success: #34d399;
             --sidebar-width: 292px;
-            --content-max-width: 1320px;
+            --content-max-width: 1600px;
             --blur: 18px;
         }
 
@@ -101,36 +103,41 @@
 
         .sidebar-toggle {
             position: fixed;
-            top: 46px;
-            left: calc(var(--sidebar-width) + 12px);
+            top: 50%;
+            left: 0;
             z-index: 2500;
-            width: 42px;
-            height: 42px;
+            width: 30px;
+            height: 56px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             color: #e2e8f0;
-            background: rgba(15, 23, 42, 0.70);
+            background: rgba(15, 23, 42, 0.58);
             border: 1px solid rgba(255, 255, 255, 0.18);
-            border-radius: 14px;
-            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.30);
+            border-left: 0;
+            border-radius: 0 14px 14px 0;
+            box-shadow: 8px 12px 28px rgba(0, 0, 0, 0.24);
             backdrop-filter: blur(14px);
             -webkit-backdrop-filter: blur(14px);
             cursor: pointer;
-            transition: left 220ms ease, background-color 170ms ease, border-color 170ms ease, transform 170ms ease;
+            opacity: 0.78;
+            transform: translateY(-50%);
+            transition: width 170ms ease, opacity 170ms ease, background-color 170ms ease, border-color 170ms ease, transform 170ms ease;
         }
 
             .sidebar-toggle:hover,
             .sidebar-toggle:focus {
                 color: #ffffff;
-                background: rgba(59, 130, 246, 0.30);
+                width: 36px;
+                opacity: 1;
+                background: rgba(59, 130, 246, 0.36);
                 border-color: rgba(147, 197, 253, 0.45);
                 outline: none;
-                transform: translateY(-1px);
+                transform: translateY(-50%) translateX(0);
             }
 
         body.sidebar-collapsed .sidebar-toggle {
-            left: 18px;
+            left: 0;
         }
 
         .app-sidebar {
@@ -488,28 +495,28 @@
 
         .app-content-wrap {
             flex: 1 1 auto;
-            padding: 42px clamp(18px, 4vw, 64px) 28px clamp(18px, 4vw, 64px);
+            padding: 18px 8px 18px 8px;
             transition: padding 240ms ease;
         }
 
         body.sidebar-collapsed .app-content-wrap {
-            padding-left: clamp(56px, 4vw, 82px);
-            padding-right: clamp(18px, 3vw, 46px);
+            padding-left: 56px;
+            padding-right: 8px;
         }
 
         .glass-content {
-            width: min(var(--content-max-width), 100%);
+            width: 100%;
             min-height: calc(100vh - 160px);
-            margin: 0 auto;
-            padding: clamp(20px, 2.4vw, 34px);
-            border-radius: 26px;
+            margin: 0;
+            padding: clamp(16px, 1.5vw, 24px);
+            border-radius: 20px;
             background: linear-gradient(180deg, rgba(15, 23, 42, 0.66) 0%, rgba(15, 23, 42, 0.54) 100%);
             font-size: 0.94rem;
             transition: width 240ms ease, max-width 240ms ease, padding 240ms ease;
         }
 
         body.sidebar-collapsed .glass-content {
-            width: min(1600px, 100%);
+            width: 100%;
         }
 
         .glass-content h1,
@@ -1631,6 +1638,111 @@
                 display: none !important;
             }
 
+        .page-transition-loader {
+            position: fixed;
+            inset: 0;
+            z-index: 9000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: rgba(2, 6, 23, 0.58);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 180ms ease;
+        }
+
+        body.is-page-loading .page-transition-loader {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .page-transition-loader-card {
+            width: min(360px, calc(100vw - 48px));
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 18px 20px;
+            color: #eff6ff;
+            background: rgba(15, 23, 42, 0.84);
+            border: 1px solid rgba(147, 197, 253, 0.32);
+            border-radius: 16px;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .page-transition-loader-spinner {
+            position: relative;
+            width: 42px;
+            height: 42px;
+            flex: 0 0 42px;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, rgba(96, 165, 250, 0.1), #60a5fa, #34d399, rgba(96, 165, 250, 0.1));
+            animation: pageLoaderSpin 850ms linear infinite;
+        }
+
+            .page-transition-loader-spinner::after {
+                content: "";
+                position: absolute;
+                inset: 5px;
+                border-radius: 50%;
+                background: #0f172a;
+                box-shadow: inset 0 0 0 1px rgba(147, 197, 253, 0.18);
+            }
+
+        .page-transition-loader-title {
+            display: block;
+            margin-bottom: 2px;
+            color: #ffffff;
+            font-size: 1rem;
+            font-weight: 800;
+        }
+
+        .page-transition-loader-text {
+            display: block;
+            color: rgba(219, 234, 254, 0.78);
+            font-size: 0.86rem;
+            line-height: 1.35;
+        }
+
+        .page-transition-loader-progress {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 3px;
+            overflow: hidden;
+            background: rgba(15, 23, 42, 0.34);
+        }
+
+            .page-transition-loader-progress::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                left: -35%;
+                width: 35%;
+                background: linear-gradient(90deg, transparent, #93c5fd, #34d399, transparent);
+                animation: pageLoaderBar 1100ms ease-in-out infinite;
+            }
+
+        @@keyframes pageLoaderSpin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @@keyframes pageLoaderBar {
+            0% {
+                left: -35%;
+            }
+
+            100% {
+                left: 100%;
+            }
+        }
+
         @@media (max-width: 640px) {
             #toast-container.toast-top-right,
             #toast-container.toast-top-left,
@@ -1658,9 +1770,10 @@
 
             .sidebar-toggle,
             body.sidebar-collapsed .sidebar-toggle {
-                top: 18px;
-                right: 14px;
-                left: auto;
+                top: 76px;
+                right: auto;
+                left: 0;
+                transform: none;
             }
 
             .app-sidebar {
@@ -1758,6 +1871,16 @@
     </style>
 </head>
 <body class="@HttpContext.Current.Request.RequestContext.RouteData.Values["controller"].ToString() @HttpContext.Current.Request.RequestContext.RouteData.Values["action"].ToString()">
+    <div class="page-transition-loader" id="pageTransitionLoader" role="status" aria-live="polite" aria-hidden="true">
+        <div class="page-transition-loader-card">
+            <span class="page-transition-loader-spinner" aria-hidden="true"></span>
+            <span>
+                <span class="page-transition-loader-title">Cargando</span>
+                <span class="page-transition-loader-text">Preparando la siguiente vista...</span>
+            </span>
+        </div>
+        <span class="page-transition-loader-progress" aria-hidden="true"></span>
+    </div>
     <div id="bg" class="app-layout">
         <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-label="Ocultar menú" aria-expanded="true" title="Ocultar menú">
             <i class="fa-solid fa-bars"></i>
@@ -2309,6 +2432,130 @@
                 });
             }
 
+            function initPageTransitionLoader() {
+                var hideTimer = null;
+                var showTimer = null;
+
+                if (window.BonoboPageLoader && window.BonoboPageLoader.initialized) {
+                    return;
+                }
+
+                function getLoader() {
+                    return document.getElementById("pageTransitionLoader");
+                }
+
+                function showLoader() {
+                    var loader = getLoader();
+
+                    if (!loader) {
+                        return;
+                    }
+
+                    window.clearTimeout(showTimer);
+                    window.clearTimeout(hideTimer);
+
+                    showTimer = window.setTimeout(function () {
+                        document.body.classList.add("is-page-loading");
+                        loader.setAttribute("aria-hidden", "false");
+                    }, 40);
+
+                    hideTimer = window.setTimeout(hideLoader, 25000);
+                }
+
+                function hideLoader() {
+                    var loader = getLoader();
+
+                    window.clearTimeout(showTimer);
+                    window.clearTimeout(hideTimer);
+                    document.body.classList.remove("is-page-loading");
+
+                    if (loader) {
+                        loader.setAttribute("aria-hidden", "true");
+                    }
+                }
+
+                window.BonoboPageLoader = {
+                    initialized: true,
+                    show: showLoader,
+                    hide: hideLoader
+                };
+
+                function isModifiedClick(event) {
+                    return event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+                }
+
+                function shouldIgnoreElement(element) {
+                    return !!(element && element.closest([
+                        "[data-no-loader]",
+                        ".sidebar-toggle",
+                        ".glass-combobox-toggle",
+                        ".glass-combobox-option",
+                        ".commit-change-toggle",
+                        ".blob-search button",
+                        ".copy-to-clip-button",
+                        ".more-commit-info-toggler",
+                        ".dataTables_paginate a",
+                        ".paginate_button"
+                    ].join(",")));
+                }
+
+                function shouldShowForLink(link) {
+                    var href = link.getAttribute("href");
+
+                    if (!href || href.charAt(0) === "#" || shouldIgnoreElement(link)) {
+                        return false;
+                    }
+
+                    if (link.target && link.target.toLowerCase() !== "_self") {
+                        return false;
+                    }
+
+                    if (link.hasAttribute("download")) {
+                        return false;
+                    }
+
+                    if (/^(javascript:|mailto:|tel:)/i.test(href)) {
+                        return false;
+                    }
+
+                    try {
+                        var url = new URL(link.href, window.location.href);
+
+                        if (url.origin !== window.location.origin) {
+                            return false;
+                        }
+
+                        return url.pathname !== window.location.pathname || url.search !== window.location.search;
+                    } catch (e) {
+                        return false;
+                    }
+                }
+
+                document.addEventListener("click", function (event) {
+                    if (isModifiedClick(event)) {
+                        return;
+                    }
+
+                    var link = event.target.closest && event.target.closest("a[href]");
+                    if (link && shouldShowForLink(link)) {
+                        showLoader();
+                    }
+                }, true);
+
+                document.addEventListener("submit", function (event) {
+                    var form = event.target;
+
+                    if (!form || shouldIgnoreElement(form) || (form.target && form.target.toLowerCase() !== "_self")) {
+                        return;
+                    }
+
+                    showLoader();
+                }, true);
+
+                window.addEventListener("pageshow", hideLoader);
+                window.addEventListener("pagehide", showLoader);
+            }
+
             function pullBackground() {
                 var bgElement = document.getElementById("bg");
 
@@ -2342,7 +2589,8 @@
                 ajaxRequest.send();
             }
 
-            document.addEventListener("DOMContentLoaded", function () {
+            function initializeLayoutEnhancements() {
+                initPageTransitionLoader();
                 initSidebarToggle();
                 enhanceRepositorySelects();
                 applyBootstrapFormClasses();
@@ -2350,7 +2598,109 @@
                 enhanceTables();
                 initSystemToastr();
                 pullBackground();
-            });
+            }
+
+            if (document.readyState === "loading") {
+                document.addEventListener("DOMContentLoaded", initializeLayoutEnhancements);
+            } else {
+                initializeLayoutEnhancements();
+            }
+        })();
+
+        (function () {
+            if (window.BonoboPageLoader && window.BonoboPageLoader.initialized) {
+                return;
+            }
+
+            var showTimer = null;
+            var hideTimer = null;
+
+            function loader() {
+                return document.getElementById("pageTransitionLoader");
+            }
+
+            function show() {
+                var element = loader();
+
+                if (!element) {
+                    return;
+                }
+
+                window.clearTimeout(showTimer);
+                window.clearTimeout(hideTimer);
+                showTimer = window.setTimeout(function () {
+                    document.body.classList.add("is-page-loading");
+                    element.setAttribute("aria-hidden", "false");
+                }, 40);
+                hideTimer = window.setTimeout(hide, 25000);
+            }
+
+            function hide() {
+                var element = loader();
+
+                window.clearTimeout(showTimer);
+                window.clearTimeout(hideTimer);
+                document.body.classList.remove("is-page-loading");
+
+                if (element) {
+                    element.setAttribute("aria-hidden", "true");
+                }
+            }
+
+            function shouldShowForNavigationLink(anchor) {
+                var href = anchor && anchor.getAttribute("href");
+
+                if (!href || href.charAt(0) === "#" || anchor.target || anchor.hasAttribute("download")) {
+                    return false;
+                }
+
+                if (anchor.closest("[data-no-loader], .commit-change-toggle, .copy-to-clip-button, .paginate_button")) {
+                    return false;
+                }
+
+                if (/^(javascript:|mailto:|tel:)/i.test(href)) {
+                    return false;
+                }
+
+                try {
+                    var url = new URL(anchor.href, window.location.href);
+                    return url.origin === window.location.origin &&
+                        (url.pathname !== window.location.pathname || url.search !== window.location.search);
+                } catch (e) {
+                    return false;
+                }
+            }
+
+            window.BonoboPageLoader = {
+                initialized: true,
+                show: show,
+                hide: hide
+            };
+
+            if (!window.__bonoboPageLoaderFallbackBound) {
+                window.__bonoboPageLoaderFallbackBound = true;
+
+                document.addEventListener("click", function (event) {
+                    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+                        return;
+                    }
+
+                    var anchor = event.target.closest && event.target.closest("a[href]");
+                    if (anchor && shouldShowForNavigationLink(anchor)) {
+                        show();
+                    }
+                }, true);
+
+                document.addEventListener("submit", function (event) {
+                    if (event.defaultPrevented || (event.target && event.target.target && event.target.target.toLowerCase() !== "_self")) {
+                        return;
+                    }
+
+                    show();
+                }, true);
+
+                window.addEventListener("pageshow", hide);
+            }
         })();
     </script>
 

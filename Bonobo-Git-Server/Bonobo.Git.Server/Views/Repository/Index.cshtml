@@ -90,16 +90,12 @@
     </div>
 }
 
-@using (Html.BeginForm(null, null, FormMethod.Post, new { @class = "pure-form repository-search" }))
-{
-    @Html.TextBox("SearchString")
-    <input type="submit" value="@Resources.Search" class="pure-button pure-button-primary" />
-}
-
 <div class="pure-g">
     @{
+        var groupIndex = 0;
         foreach (KeyValuePair<string, RepositoryDetailModel[]> model in Model)
         {
+            var tableId = "Repositories_" + groupIndex++;
             bool emptyGroup = string.IsNullOrEmpty(model.Key);
 
             if (!emptyGroup)
@@ -114,7 +110,7 @@
             // https://dusted.codes/making-font-awesome-awesome-using-icons-without-i-tags
             <div class="pure-u-1 table-glass-wrap">
                 @{
-                    var permitted = new WebGrid(source: model.Value, defaultSort: "Name", rowsPerPage: 15);
+                    var permitted = new WebGrid(source: model.Value, defaultSort: "Name", canPage: false, canSort: false);
 
 
                     var columns = new List<WebGridColumn>();
@@ -172,7 +168,7 @@
                     @permitted.GetHtml(
                         tableStyle: "pure-table repositories",
                         columns: columns,
-                        htmlAttributes: new { @Id = "Repositories" }
+                        htmlAttributes: new { @Id = tableId }
                         )
                 }
             </div>
@@ -182,5 +178,44 @@
 
 @section scripts{
     <script src="~/Scripts/RepositoryGroupToggle.js" defer="defer"></script>
-    <script>new Clipboard('.copy-to-clip-button');</script>
+    <script>
+        $(function () {
+            $("table.repositories").each(function () {
+                if (!$.fn.DataTable || $.fn.DataTable.isDataTable(this)) {
+                    return;
+                }
+
+                $(this).DataTable({
+                    autoWidth: false,
+                    deferRender: true,
+                    order: [],
+                    pageLength: 10,
+                    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                    dom: '<"repository-files-controls"lf>rt<"repository-files-footer"ip>',
+                    language: {
+                        search: "Buscar:",
+                        searchPlaceholder: "repositorio o descripcion",
+                        lengthMenu: "Mostrar _MENU_",
+                        info: "_START_-_END_ de _TOTAL_",
+                        infoEmpty: "0 repositorios",
+                        infoFiltered: "(filtrado de _MAX_)",
+                        zeroRecords: "No se encontraron repositorios",
+                        paginate: {
+                            first: "Primero",
+                            last: "Ultimo",
+                            next: "Siguiente",
+                            previous: "Anterior"
+                        }
+                    },
+                    columnDefs: [
+                        { targets: "logo", orderable: false, searchable: false, width: "42px" },
+                        { targets: "action", orderable: false, searchable: false, width: "48px" },
+                        { targets: "description", width: "45%" }
+                    ]
+                });
+            });
+
+            new Clipboard('.copy-to-clip-button');
+        });
+    </script>
 }

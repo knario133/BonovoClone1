@@ -1,4 +1,5 @@
-﻿@using Bonobo.Git.Server.Extensions
+@using Bonobo.Git.Server.Extensions
+@using System.IO
 @model RepositoryTreeDetailModel
 @{
     Layout = "~/Views/Repository/_RepositoryLayout.cshtml";
@@ -6,22 +7,54 @@
 }
 @if (Model != null)
 {
+    var extension = Path.GetExtension(Model.Name ?? Model.Path ?? String.Empty).ToLowerInvariant();
+    var extensionName = extension.TrimStart('.');
+    var rawUrl = Url.Action("Raw", new { id = ViewBag.ID, encodedName = PathEncoder.Encode(Model.TreeName), encodedPath = PathEncoder.Encode(Model.Path, allowSlash: true), display = true });
+    var downloadUrl = Url.Action("Raw", new { id = ViewBag.ID, encodedName = PathEncoder.Encode(Model.TreeName), encodedPath = PathEncoder.Encode(Model.Path, allowSlash: true) });
+    var isPdf = extension == ".pdf";
+    var isOfficePreview = extension == ".docx" || extension == ".xlsx" || extension == ".xls" || extension == ".pptx";
+    var languageClass = Model.TextBrush == FileDisplayHandler.NoBrush ? FileDisplayHandler.NoBrush : "language-" + Model.TextBrush;
+    var lineCount = Model.IsText ? Model.Text.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None).Length : 0;
+
     @Html.Partial("_BranchSwitcher")
     @Html.Partial("_AddressBar")
 
-    <div class="blob">
-        @{
-            <div class="controls">
-                <span>@(Model.IsText ? Model.Text.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None).Length + " lines |" : "") @FileDisplayHandler.GetFileSizeString(Model.Data.LongLength)</span>
-                <a href="@Url.Action("Blame", new { id=ViewBag.ID, encodedName = PathEncoder.Encode(Model.TreeName), encodedPath = PathEncoder.Encode(Model.Path, allowSlash: true)})"><i class="fa fa-comments"></i> @Resources.Repository_Tree_Blame</a>
-                <a href="@Url.Action("History", new { id=ViewBag.ID, encodedName = PathEncoder.Encode(Model.TreeName), encodedPath = PathEncoder.Encode(Model.Path, allowSlash: true)})"><i class="fa fa-history"></i> @Resources.Repository_Tree_History</a>
-                <a href="@Url.Action("Raw", new { id=ViewBag.ID, encodedName = PathEncoder.Encode(Model.TreeName), encodedPath = PathEncoder.Encode(Model.Path, allowSlash: true), display = true })"><i class="fa fa-file-text"></i> @Resources.Repository_Tree_RawDisplay</a>
-                <a href="@Url.Action("Raw", new { id=ViewBag.ID, encodedName = PathEncoder.Encode(Model.TreeName), encodedPath = PathEncoder.Encode(Model.Path, allowSlash: true) })"><i class="fa fa-download"></i> @Resources.Repository_Tree_Download</a>
+    <div class="blob" data-blob-viewer data-extension="@extensionName" data-raw-url="@rawUrl">
+        <div class="controls blob-toolbar">
+            <div class="blob-meta">
+                <span class="blob-language">@(String.IsNullOrEmpty(extensionName) ? "file" : extensionName)</span>
+                <span>@(Model.IsText ? lineCount + " lines |" : "") @FileDisplayHandler.GetFileSizeString(Model.Data.LongLength)</span>
             </div>
-        }
+            <div class="blob-tools">
+                <div class="blob-actions">
+                    <a href="@Url.Action("Blame", new { id=ViewBag.ID, encodedName = PathEncoder.Encode(Model.TreeName), encodedPath = PathEncoder.Encode(Model.Path, allowSlash: true)})"><i class="fa fa-comments"></i> @Resources.Repository_Tree_Blame</a>
+                    <a href="@Url.Action("History", new { id=ViewBag.ID, encodedName = PathEncoder.Encode(Model.TreeName), encodedPath = PathEncoder.Encode(Model.Path, allowSlash: true)})"><i class="fa fa-history"></i> @Resources.Repository_Tree_History</a>
+                    <a href="@rawUrl"><i class="fa fa-file-text"></i> @Resources.Repository_Tree_RawDisplay</a>
+                    <a href="@downloadUrl"><i class="fa fa-download"></i> @Resources.Repository_Tree_Download</a>
+                </div>
+                @if (Model.IsText)
+                {
+                    <div class="blob-search">
+                        <i class="fa fa-search"></i>
+                        <input type="search" data-blob-search placeholder="Search" />
+                        <span data-blob-search-count>0/0</span>
+                        <button type="button" data-blob-previous title="Previous match"><i class="fa fa-chevron-up"></i></button>
+                        <button type="button" data-blob-next title="Next match"><i class="fa fa-chevron-down"></i></button>
+                        <button type="button" data-blob-reindent title="Reindent code"><i class="fa fa-indent"></i></button>
+                        <span class="blob-status" data-blob-status></span>
+                    </div>
+                }
+            </div>
+        </div>
         @if (Model.IsImage)
         {
-            <img class="fileImage" alt="@Model.Name" src="@Url.Action("Raw", new { id=ViewBag.ID, encodedName = PathEncoder.Encode(Model.TreeName), encodedPath = PathEncoder.Encode(Model.Path, allowSlash: true) })" />
+            <img class="fileImage" alt="@Model.Name" src="@downloadUrl" />
+        }
+        else if (isPdf || isOfficePreview)
+        {
+            <div class="document-preview" data-document-preview>
+                <div class="document-preview-empty">Loading preview...</div>
+            </div>
         }
         else if (Model.IsText && Model.IsMarkdown)
         {
@@ -29,16 +62,30 @@
         }
         else if (Model.IsText)
         {
-            <pre><code class="@Model.TextBrush">@Model.Text</code></pre>
+            <pre class="blob-code-frame"><code data-blob-code class="@languageClass">@Model.Text</code></pre>
         }
         else
         {
-            <pre><code>@Resources.Repository_Tree_PreviewNotSupported</code></pre>
+            <pre class="blob-code-frame"><code>@Resources.Repository_Tree_PreviewNotSupported</code></pre>
         }
     </div>
 }
 
-@section scripts 
+@section scripts
 {
-    <script>hljs.configure({tabReplace:'    '});hljs.initHighlightingOnLoad();</script>
+    <script src="@Url.Content("~/Scripts/vendor/prettier/standalone.js")"></script>
+    <script src="@Url.Content("~/Scripts/vendor/prettier/plugin-estree.js")"></script>
+    <script src="@Url.Content("~/Scripts/vendor/prettier/parser-babel.js")"></script>
+    <script src="@Url.Content("~/Scripts/vendor/prettier/parser-html.js")"></script>
+    <script src="@Url.Content("~/Scripts/vendor/prettier/parser-postcss.js")"></script>
+    <script src="@Url.Content("~/Scripts/vendor/prettier/parser-typescript.js")"></script>
+    <script src="@Url.Content("~/Scripts/vendor/highlightjs/languages/csharp.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/vendor/highlightjs/languages/javascript.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/vendor/highlightjs/languages/json.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/vendor/highlightjs/languages/typescript.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/vendor/highlightjs/languages/xml.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/vendor/vkbeautify/vkbeautify.js")?v=0.99.3-local"></script>
+    <script src="@Url.Content("~/Scripts/vendor/mammoth/mammoth.browser.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/vendor/sheetjs/xlsx.full.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/blob-viewer.js")?v=structured-preview-20260601b"></script>
 }

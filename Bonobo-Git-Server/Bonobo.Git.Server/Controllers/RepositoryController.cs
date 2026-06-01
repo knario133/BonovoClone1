@@ -343,9 +343,9 @@ namespace Bonobo.Git.Server.Controllers
                 {
                     return File(model.Data, MimeTypeMap.GetMimeType(Path.GetExtension(model.Name.ToLower())), model.Name);
                 }
-            }
 
-            return HttpNotFound();
+                return File(model.Data, MimeTypeMap.GetMimeType(Path.GetExtension(model.Name.ToLower())));
+            }
         }
 
         [WebAuthorizeRepository]
@@ -523,6 +523,25 @@ namespace Bonobo.Git.Server.Controllers
                 model.Name = repo.Name;
                 model.Logo = new RepositoryLogoDetailModel(repo.Logo);
                 return View(model);
+            }
+        }
+
+        [WebAuthorizeRepository]
+        public ActionResult CommitChange(Guid id, string commit, string encodedPath)
+        {
+            ViewBag.ID = id;
+
+            var repo = RepositoryRepository.GetRepository(id);
+            using (var browser = new RepositoryBrowser(Path.Combine(UserConfiguration.Current.Repositories, repo.Name)))
+            {
+                var path = PathEncoder.Decode(encodedPath);
+                var model = browser.GetCommitChangeDetail(commit, path);
+                if (model == null)
+                {
+                    return HttpNotFound();
+                }
+
+                return PartialView("_CommitChangeDetails", model);
             }
         }
 

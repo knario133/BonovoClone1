@@ -34,6 +34,7 @@ namespace Bonobo.Git.Server
                     return "vb";
 
                 case ".cs":
+                case ".ashx":
                     return "csharp";
 
                 case ".as":
@@ -45,15 +46,17 @@ namespace Bonobo.Git.Server
                 case ".html":
                 case ".htm":
                 case ".xhtml":
-                case ".xslt":
-                case ".xml":
                 case ".asp":
                 case ".aspx":
                 case ".cshtml":
+                    return "html";
+
+                case ".xslt":
+                case ".xml":
                 case ".xaml":
                 case ".csproj":
                 case ".config":
-                    return "html";
+                    return "xml";
 
                 case ".cf":
                     return "cf";
@@ -84,7 +87,7 @@ namespace Bonobo.Git.Server
                 case ".js":
                 case ".jscript":
                 case ".javascript":
-                    return "js";
+                    return "javascript";
                 case ".json":
                     return "json";
 
@@ -104,7 +107,7 @@ namespace Bonobo.Git.Server
 
                 case ".ps1":
                 case ".psm1":
-                    return "ps";
+                    return "powershell";
 
                 case ".py":
                     return "python";

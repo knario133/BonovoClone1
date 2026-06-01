@@ -1,50 +1,35 @@
-﻿@model RepositoryCommitModel
+@model RepositoryCommitModel
 @using Bonobo.Git.Server.Extensions
 @{
     ViewBag.Title = Resources.Repository_Commit_Detail;
     Layout = "~/Views/Repository/_RepositoryLayout.cshtml";
 }
-@helper HeaderForDiff(RepositoryCommitChangeModel item)
+@helper StatusIcon(RepositoryCommitChangeModel item)
 {
-    <div class="item">
-        <p>
-            <a href="@("#change-" + item.ChangeId)"><i class="fa fa-share-square-o" title="Go To Change"></i></a>
-            @if (item.Status == LibGit2Sharp.ChangeKind.Added)
-            {
-                <text><i class="fa fa-plus-square-o" title="@Resources.Repository_Commit_Added"></i></text>
-            }
-            else if (item.Status == LibGit2Sharp.ChangeKind.Modified)
-            {
-                <text><i class="fa fa-edit" title="@Resources.Repository_Commit_Modified"></i></text>
-            }
-            else if (item.Status == LibGit2Sharp.ChangeKind.Deleted)
-            {
-                <text><i class="fa fa-minus-square-o" title="@Resources.Repository_Commit_Deleted"></i></text>
-            }
-            else if (item.Status == LibGit2Sharp.ChangeKind.Renamed)
-            {
-                <text><i class="fa fa-share-square-o" title="@Resources.Repository_Commit_Renamed"></i></text>
-            }
-            else if (item.Status == LibGit2Sharp.ChangeKind.Copied)
-            {
-                <text><i class="fa fa-copy" title="@Resources.Repository_Commit_Copied"></i></text>
-            }
-            else if (item.Status == LibGit2Sharp.ChangeKind.TypeChanged)
-            {
-                <text><i class="fa fa-caret-square-o-right" title="@Resources.Repository_Commit_TypeChanged"></i></text>
-            }
-            @if (item.Status != LibGit2Sharp.ChangeKind.Deleted)
-            {
-                @Html.ActionLink(item.Path, "Blob", new { id = ViewBag.ID, encodedPath = PathEncoder.Encode(item.Path, allowSlash: true), encodedName = PathEncoder.Encode(Model.ID) })
-            }
-            else
-            {
-                @item.Path
-            }
-            <span class="count">@item.LinesChanged<em>(+@item.LinesAdded -@item.LinesDeleted)</em></span>
-
-        </p>
-    </div>
+    if (item.Status == LibGit2Sharp.ChangeKind.Added)
+    {
+        <i class="fa fa-plus-square-o commit-change-added" title="@Resources.Repository_Commit_Added"></i>
+    }
+    else if (item.Status == LibGit2Sharp.ChangeKind.Modified)
+    {
+        <i class="fa fa-edit commit-change-modified" title="@Resources.Repository_Commit_Modified"></i>
+    }
+    else if (item.Status == LibGit2Sharp.ChangeKind.Deleted)
+    {
+        <i class="fa fa-minus-square-o commit-change-deleted" title="@Resources.Repository_Commit_Deleted"></i>
+    }
+    else if (item.Status == LibGit2Sharp.ChangeKind.Renamed)
+    {
+        <i class="fa fa-share-square-o commit-change-renamed" title="@Resources.Repository_Commit_Renamed"></i>
+    }
+    else if (item.Status == LibGit2Sharp.ChangeKind.Copied)
+    {
+        <i class="fa fa-copy commit-change-copied" title="@Resources.Repository_Commit_Copied"></i>
+    }
+    else if (item.Status == LibGit2Sharp.ChangeKind.TypeChanged)
+    {
+        <i class="fa fa-caret-square-o-right commit-change-typechanged" title="@Resources.Repository_Commit_TypeChanged"></i>
+    }
 }
 
 @if (Model != null)
@@ -52,30 +37,134 @@
     <div>
         @Html.Partial("_Commit", Model)
 
-        <div class="changes">
-            <h3>@Model.GetType().GetDisplayValue("Changes")</h3>
-            @foreach (var item in Model.Changes)
-            {
-                @HeaderForDiff(item)
-            }
-        </div>
-
-        <div class="diff">
-            <h3>@Resources.Repository_Commit_Details</h3>
-            @foreach (var item in Model.Changes.Where(i => i.Status == LibGit2Sharp.ChangeKind.Modified || i.Status == LibGit2Sharp.ChangeKind.Added))
-            {
-                <div class="blob" id="@("change-"+ item.ChangeId)">
-                    <div class="controls">
-                        @HeaderForDiff(item)
-                    </div>
-                    <pre><code class="language diff">@item.Patch</code></pre>
-                </div>
-            }
+        <div class="commit-changes-browser table-glass-wrap">
+            <table id="commit-changes" class="pure-table pure-table-horizontal compact commit-changes-table">
+                <thead>
+                    <tr>
+                        <th class="details"></th>
+                        <th>Status</th>
+                        <th>Archivo</th>
+                        <th>Agregadas</th>
+                        <th>Eliminadas</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Changes)
+                    {
+                        <tr>
+                            <td class="details">
+                                <button type="button"
+                                        class="commit-change-toggle"
+                                        title="@Resources.Repository_Commit_Details"
+                                        data-details-url="@Url.Action("CommitChange", new { id = ViewBag.ID, commit = Model.ID, encodedPath = PathEncoder.Encode(item.Path, allowSlash: true) })">
+                                    <i class="fa fa-info-circle"></i>
+                                </button>
+                            </td>
+                            <td class="status">
+                                @StatusIcon(item)
+                                <span>@item.Status</span>
+                            </td>
+                            <td class="path">
+                                @if (item.Status != LibGit2Sharp.ChangeKind.Deleted)
+                                {
+                                    @Html.ActionLink(item.Path, "Blob", new { id = ViewBag.ID, encodedPath = PathEncoder.Encode(item.Path, allowSlash: true), encodedName = PathEncoder.Encode(Model.ID) })
+                                }
+                                else
+                                {
+                                    @item.Path
+                                }
+                            </td>
+                            <td class="count plus">+@item.LinesAdded</td>
+                            <td class="count minus">-@item.LinesDeleted</td>
+                            <td class="count">@item.LinesChanged</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
 }
 
 @section scripts
 {
-    <script>hljs.configure({ tabReplace: '    ' }); hljs.initHighlightingOnLoad();</script>
+    <script>
+        $(function () {
+            var $table = $("#commit-changes");
+            if (!$table.length || !$.fn.DataTable) {
+                return;
+            }
+
+            var table = $table.DataTable({
+                autoWidth: false,
+                deferRender: true,
+                order: [[2, "asc"]],
+                pageLength: 25,
+                lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                dom: '<"repository-files-controls"lf>rt<"repository-files-footer"ip>',
+                language: {
+                    search: "Buscar:",
+                    searchPlaceholder: "archivo, estado o extension",
+                    lengthMenu: "Mostrar _MENU_",
+                    info: "_START_-_END_ de _TOTAL_",
+                    infoEmpty: "0 cambios",
+                    infoFiltered: "(filtrado de _MAX_)",
+                    zeroRecords: "No se encontraron cambios",
+                    paginate: {
+                        first: "Primero",
+                        last: "Ultimo",
+                        next: "Siguiente",
+                        previous: "Anterior"
+                    }
+                },
+                columnDefs: [
+                    { targets: 0, orderable: false, searchable: false, width: "44px" },
+                    { targets: 1, width: "12%" },
+                    { targets: 2, width: "58%" },
+                    { targets: [3, 4, 5], className: "dt-body-right", width: "10%" }
+                ]
+            });
+
+            $table.on("click", ".commit-change-toggle", function () {
+                var button = this;
+                var row = table.row($(button).closest("tr"));
+
+                if (row.child.isShown()) {
+                    row.child.hide();
+                    $(button).removeClass("is-open");
+                    return;
+                }
+
+                if (button._detailsHtml) {
+                    row.child(button._detailsHtml, "commit-change-child").show();
+                    $(button).addClass("is-open");
+                    highlightCommitChange(row.child());
+                    return;
+                }
+
+                row.child('<div class="commit-change-loading"><i class="fa fa-spinner fa-spin"></i> Cargando detalle...</div>', "commit-change-child").show();
+                $(button).addClass("is-open");
+
+                $.get($(button).data("details-url"))
+                    .done(function (html) {
+                        button._detailsHtml = html;
+                        row.child(html, "commit-change-child").show();
+                        highlightCommitChange(row.child());
+                    })
+                    .fail(function () {
+                        row.child('<div class="commit-change-loading commit-change-error">No se pudo cargar el detalle del cambio.</div>', "commit-change-child").show();
+                    });
+            });
+
+            function highlightCommitChange($child) {
+                if (!window.hljs || !$child) {
+                    return;
+                }
+
+                $child.find("pre code").each(function () {
+                    hljs.highlightElement(this);
+                });
+            }
+        });
+    </script>
 }

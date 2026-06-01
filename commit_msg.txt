@@ -1,0 +1,29 @@
+Refactor: Modernización integral de infraestructura, UI/UX y rendimiento (Bernese Edition) 
+ 
+Esta actualización representa una refactorización masiva del sistema, eliminando deuda técnica crítica en el motor de base de datos, optimizando el consumo de memoria del servidor mediante carga bajo demanda, y modernizando por completo la interfaz de usuario con un visor de código avanzado y tablas dinámicas. 
+ 
+[INFRAESTRUCTURA Y BACKEND] 
+- Actualización total de dependencias NuGet alineadas a .NET Framework 4.7.2. 
+- Resolución de conflictos de 'assemblyBinding' y purga de dependencias circulares en Web.config. 
+- Integración exitosa del motor SQLite nativo, eliminando bloqueos de arquitectura. 
+- Compilación validada con MSBuild: 0 advertencias, 0 errores. 
+ 
+[RENDIMIENTO Y ESTABILIDAD] 
+- Implementación de "Lazy Loading" (AJAX) para la carga de Diffs en la vista de Commits, evitando colapso de RAM. 
+- Corrección de bugs críticos de navegación: acceso a ramas y visualización de binarios en vista Raw. 
+- Solución al error 404 en la renderización de archivos PDF. 
+- Corrección de errores de ejecución Razor. 
+ 
+[INTERFAZ Y NAVEGACION (FRONTEND)] 
+- Integración global de DataTables para habilitar búsqueda, ordenamiento y paginación en tiempo real. 
+- Rediseño del Layout (Glass/Dark): Menú lateral discreto y maximización del área de trabajo. 
+- Implementación de Loader Global con overlay inteligente. 
+- Contención del DOM en vistas de diffs mediante barras de desplazamiento encapsuladas. 
+ 
+[VISOR DE CODIGO AVANZADO] 
+- Integración local de highlight.js con soporte nativo para C#, JavaScript, TypeScript, XML y JSON. 
+- Incorporación de Modo Oscuro, búsqueda interna de texto y formateo/reindentación automática. 
+- Habilitación de previsualización local para documentos de Office y PDFs. 
+ 
+[QA y PRUEBAS] 
+- Validado: Flujo de autenticación, navegación en árbol de archivos, carga asíncrona de parches y estabilidad de IIS. 

@@ -1,0 +1,13 @@
+@model RepositoryCommitChangeModel
+
+<div class="commit-change-details">
+    <div class="commit-change-details-header">
+        <strong>@Model.Path</strong>
+        <span>@Model.Status</span>
+        <span>+@Model.LinesAdded</span>
+        <span>-@Model.LinesDeleted</span>
+    </div>
+    <div class="blob diff">
+        <pre><code class="language-diff">@Model.Patch</code></pre>
+    </div>
+</div>

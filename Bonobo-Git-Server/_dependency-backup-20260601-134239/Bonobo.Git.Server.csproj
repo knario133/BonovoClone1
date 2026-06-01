@@ -20,7 +20,6 @@
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <MvcBuildViews>false</MvcBuildViews>
     <TargetFrameworkProfile />
-    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">win-x64</RuntimeIdentifier>
     <UseIISExpress>true</UseIISExpress>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
@@ -498,10 +497,6 @@
     <Compile Include="FilterProviders\UnityFilterAttributeFilterProvider.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\packages\SourceGear.sqlite3.3.50.4.5\runtimes\win-x64\native\e_sqlite3.dll">
-      <Link>e_sqlite3.dll</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="App_Data\Git\antiword.exe" />
     <Content Include="App_Data\Git\basename.exe" />
     <Content Include="App_Data\Git\bash.exe" />
@@ -639,8 +634,6 @@
     <Content Include="Content\components\highlight\styles\github.css" />
     <Content Include="Content\components\pure\pure-min.css" />
     <Content Include="Content\fonts.css" />
-    <Content Include="Content\vendor\highlightjs\atom-one-dark.min.css" />
-    <Content Include="Content\vendor\highlightjs\monokai-sublime.min.css" />
     <Content Include="Content\fonts\opensans-bold.svg" />
     <Content Include="Content\fonts\opensans-light.svg" />
     <Content Include="Content\fonts\opensans-regular.svg" />
@@ -690,23 +683,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="Scripts\clipboard.min.js" />
-    <Content Include="Scripts\blob-viewer.js" />
     <Content Include="Scripts\highlight.pack.js" />
-    <Content Include="Scripts\vendor\highlightjs\highlight.min.js" />
-    <Content Include="Scripts\vendor\highlightjs\languages\csharp.min.js" />
-    <Content Include="Scripts\vendor\highlightjs\languages\javascript.min.js" />
-    <Content Include="Scripts\vendor\highlightjs\languages\json.min.js" />
-    <Content Include="Scripts\vendor\highlightjs\languages\typescript.min.js" />
-    <Content Include="Scripts\vendor\highlightjs\languages\xml.min.js" />
-    <Content Include="Scripts\vendor\mammoth\mammoth.browser.min.js" />
-    <Content Include="Scripts\vendor\prettier\parser-babel.js" />
-    <Content Include="Scripts\vendor\prettier\parser-html.js" />
-    <Content Include="Scripts\vendor\prettier\parser-postcss.js" />
-    <Content Include="Scripts\vendor\prettier\parser-typescript.js" />
-    <Content Include="Scripts\vendor\prettier\plugin-estree.js" />
-    <Content Include="Scripts\vendor\prettier\standalone.js" />
-    <Content Include="Scripts\vendor\sheetjs\xlsx.full.min.js" />
-    <Content Include="Scripts\vendor\vkbeautify\vkbeautify.js" />
     <Content Include="Scripts\jquery-1.12.4.js" />
     <Content Include="Scripts\jquery-1.12.4.min.js" />
     <Content Include="Scripts\jquery-ui.js" />
@@ -824,7 +801,6 @@
     <Content Include="Views\Repository\_AddressBar.cshtml" />
     <Content Include="Views\Repository\Commits.cshtml" />
     <Content Include="Views\Repository\Commit.cshtml" />
-    <Content Include="Views\Repository\_CommitChangeDetails.cshtml" />
     <Content Include="Views\Shared\_ItemNotFound.cshtml" />
     <Content Include="Views\Repository\_Commit.cshtml" />
   </ItemGroup>

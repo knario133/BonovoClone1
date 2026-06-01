@@ -89,6 +89,37 @@ namespace Bonobo.Git.Server
             return commit == null ? null : ToModel(commit, true);
         }
 
+        public RepositoryCommitChangeModel GetCommitChangeDetail(string name, string path)
+        {
+            string referenceName;
+            var commit = GetCommitByName(name, out referenceName);
+            if (commit == null || String.IsNullOrEmpty(path))
+            {
+                return null;
+            }
+
+            var oldTree = commit.Parents.Any() ? commit.Parents.First().Tree : null;
+            var changes = _repository.Diff.Compare<TreeChanges>(oldTree, commit.Tree);
+            var change = changes.FirstOrDefault(i => String.Equals(i.Path.Replace('\\', '/'), path, StringComparison.OrdinalIgnoreCase));
+            if (change == null)
+            {
+                return null;
+            }
+
+            var patches = _repository.Diff.Compare<Patch>(oldTree, commit.Tree, new[] { change.Path });
+            var patch = patches[change.Path];
+
+            return new RepositoryCommitChangeModel
+            {
+                ChangeId = change.Oid.Sha,
+                Path = change.Path.Replace('\\', '/'),
+                Status = change.Status,
+                LinesAdded = patch.LinesAdded,
+                LinesDeleted = patch.LinesDeleted,
+                Patch = patch.Patch
+            };
+        }
+
         public IEnumerable<RepositoryTreeDetailModel> BrowseTree(string name, string path, out string referenceName, bool includeDetails = false)
         {
             var commit = GetCommitByName(name, out referenceName);
@@ -295,8 +326,7 @@ namespace Bonobo.Git.Server
 
             if (string.IsNullOrEmpty(name))
             {
-                referenceName = _repository.Head.FriendlyName;
-                return _repository.Head.Tip;
+                return GetDefaultCommit(out referenceName);
             }
 
             var branch = _repository.Branches[name];
@@ -309,11 +339,31 @@ namespace Bonobo.Git.Server
             var tag = _repository.Tags[name];
             if (tag == null)
             {
-                return _repository.Lookup(name) as Commit;
+                return _repository.Lookup(name) as Commit ?? GetDefaultCommit(out referenceName);
             }
 
             referenceName = tag.FriendlyName;
             return tag.Target as Commit;
+        }
+
+        private Commit GetDefaultCommit(out string referenceName)
+        {
+            referenceName = null;
+
+            if (_repository.Head != null && _repository.Head.Tip != null)
+            {
+                referenceName = _repository.Head.FriendlyName;
+                return _repository.Head.Tip;
+            }
+
+            var branch = _repository.Branches.FirstOrDefault(b => b.Tip != null);
+            if (branch == null)
+            {
+                return null;
+            }
+
+            referenceName = branch.FriendlyName;
+            return branch.Tip;
         }
 
         private RepositoryCommitModel ToModel(Commit commit, bool withDiff = false)//, Tuple<bool, string, string> linkify)
@@ -356,7 +406,6 @@ namespace Bonobo.Git.Server
                     Status = i.Status,
                     LinesAdded = patch.LinesAdded,
                     LinesDeleted = patch.LinesDeleted,
-                    Patch = patch.Patch,
 
                 };
             });

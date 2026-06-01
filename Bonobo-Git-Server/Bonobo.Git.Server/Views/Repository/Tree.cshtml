@@ -10,38 +10,40 @@
         @Html.Partial("_BranchSwitcher")
         @Html.Partial("_AddressBar")
 
-        <table id="files" class="pure-table">
-            <thead>
-                <tr>
-                    <th>@typeof(RepositoryTreeDetailModel).GetDisplayValue("Name")</th>
-                    <th>@typeof(RepositoryTreeDetailModel).GetDisplayValue("CommitMessage")</th>
-                    <th>@typeof(RepositoryTreeDetailModel).GetDisplayValue("CommitDate")</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model.Files)
-                {
+        <div class="table-glass-wrap repository-files-browser">
+            <table id="files" class="pure-table display compact">
+                <thead>
                     <tr>
-                        <td class="path">
-                            @if (item.IsLink)
-                            {
-                                <span class="directory">@item.Name</span>
-                            }
-                            else if (item.IsTree)
-                            {
-                                @Html.ActionLink(item.Name, "Tree", new { id= ViewBag.ID, encodedName = PathEncoder.Encode(Model.Branch), encodedPath = PathEncoder.Encode(item.Path, allowSlash: true) }, new { @class = "directory" })
-                            }
-                            else 
-                            {
-                                @Html.ActionLink(item.Name, "Blob", new { id = ViewBag.ID, encodedName = PathEncoder.Encode(Model.Branch), encodedPath = PathEncoder.Encode(item.Path, allowSlash: true) }, new { @class = item.IsImage ? "image" : "file" })
-                            }
-                        </td>
-                        <td class="message"></td>
-                        <td class="date"></td>
+                        <th>@typeof(RepositoryTreeDetailModel).GetDisplayValue("Name")</th>
+                        <th>@typeof(RepositoryTreeDetailModel).GetDisplayValue("CommitMessage")</th>
+                        <th>@typeof(RepositoryTreeDetailModel).GetDisplayValue("CommitDate")</th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Files)
+                    {
+                        <tr>
+                            <td class="path">
+                                @if (item.IsLink)
+                                {
+                                    <span class="directory">@item.Name</span>
+                                }
+                                else if (item.IsTree)
+                                {
+                                    @Html.ActionLink(item.Name, "Tree", new { id= ViewBag.ID, encodedName = PathEncoder.Encode(Model.Branch), encodedPath = PathEncoder.Encode(item.Path, allowSlash: true) }, new { @class = "directory" })
+                                }
+                                else
+                                {
+                                    @Html.ActionLink(item.Name, "Blob", new { id = ViewBag.ID, encodedName = PathEncoder.Encode(Model.Branch), encodedPath = PathEncoder.Encode(item.Path, allowSlash: true) }, new { @class = item.IsImage ? "image" : "file" })
+                                }
+                            </td>
+                            <td class="message"></td>
+                            <td class="date"></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
 
         @if (!string.IsNullOrEmpty(Model.Readme))
         {
@@ -62,12 +64,49 @@
     <script>
         $(function () {
             var url = '@Url.Action("Tree", ViewContext.RouteData.Values)';
-            $.ajax({ url: url, success: detailsLoaded, type: 'GET', dataType: 'json', cache: false });
+            $.ajax({ url: url, success: detailsLoaded, error: initializeFilesTable, type: 'GET', dataType: 'json', cache: false });
 
             function detailsLoaded(model) {
                 $("#files tbody > tr").each(function (index) {
                     $(this).find(".message").html(model.Files[index].CommitMessage);
                     $(this).find(".date").html(model.Files[index].CommitDateString);
+                });
+
+                initializeFilesTable();
+            }
+
+            function initializeFilesTable() {
+                if (!$.fn.DataTable || $.fn.DataTable.isDataTable("#files")) {
+                    return;
+                }
+
+                $("#files").DataTable({
+                    autoWidth: false,
+                    deferRender: true,
+                    order: [],
+                    pageLength: 25,
+                    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                    dom: '<"repository-files-controls"lf>rt<"repository-files-footer"ip>',
+                    language: {
+                        search: "Buscar:",
+                        searchPlaceholder: "archivo, carpeta o mensaje",
+                        lengthMenu: "Mostrar _MENU_",
+                        info: "_START_-_END_ de _TOTAL_",
+                        infoEmpty: "0 archivos",
+                        infoFiltered: "(filtrado de _MAX_)",
+                        zeroRecords: "No se encontraron archivos",
+                        paginate: {
+                            first: "Primero",
+                            last: "Ultimo",
+                            next: "Siguiente",
+                            previous: "Anterior"
+                        }
+                    },
+                    columnDefs: [
+                        { targets: 0, width: "32%" },
+                        { targets: 1, width: "48%" },
+                        { targets: 2, width: "20%" }
+                    ]
                 });
             }
         });
