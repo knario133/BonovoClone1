@@ -7,6 +7,7 @@ using Bonobo.Git.Server.Models;
 using Bonobo.Git.Server.Security;
 using Ionic.Zip;
 using MimeTypes;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -144,39 +145,48 @@ namespace Bonobo.Git.Server.Controllers
                 return RedirectToAction("Unauthorized", "Home");
             }
 
-            if (model != null && !String.IsNullOrEmpty(model.Name))
-            {
-                model.Name = Regex.Replace(model.Name, @"\s", "");
-            }
-
             if (model != null && String.IsNullOrEmpty(model.Name))
             {
                 ModelState.AddModelError("Name", Resources.Repository_Create_NameFailure);
+            }
+            else if (model != null && Regex.IsMatch(model.Name, @"\s"))
+            {
+                ModelState.AddModelError("Name", "El nombre del repositorio no puede contener espacios. Use guiones o guiones bajos.");
             }
             else if (ModelState.IsValid)
             {
 
                 var repo_model = ConvertRepositoryDetailModel(model);
-                if (RepositoryRepository.Create(repo_model))
+                string path = Path.Combine(UserConfiguration.Current.Repositories, model.Name);
+                if (Directory.Exists(path))
                 {
-                    string path = Path.Combine(UserConfiguration.Current.Repositories, model.Name);
-                    if (!Directory.Exists(path))
-                    {
-                        LibGit2Sharp.Repository.Init(path, true);
-                        TempData["CreateSuccess"] = true;
-                        TempData["SuccessfullyCreatedRepositoryName"] = model.Name;
-                        TempData["SuccessfullyCreatedRepositoryId"] = repo_model.Id;
-                        return RedirectToAction("Index");
-                    }
-                    else
-                    {
-                        RepositoryRepository.Delete(model.Id);
-                        ModelState.AddModelError("", Resources.Repository_Create_DirectoryExists);
-                    }
+                    ModelState.AddModelError("", Resources.Repository_Create_DirectoryExists);
                 }
                 else
                 {
-                    ModelState.AddModelError("", Resources.Repository_Create_Failure);
+                    try
+                    {
+                        Directory.CreateDirectory(path);
+                        Log.Information("RepoC: Initializing repository {RepositoryName} at {RepositoryPath}", model.Name, path);
+                        LibGit2Sharp.Repository.Init(path, true);
+
+                        if (RepositoryRepository.Create(repo_model))
+                        {
+                            TempData["CreateSuccess"] = true;
+                            TempData["SuccessfullyCreatedRepositoryName"] = model.Name;
+                            TempData["SuccessfullyCreatedRepositoryId"] = repo_model.Id;
+                            return RedirectToAction("Index");
+                        }
+
+                        DeleteRepositoryDirectoryIfSafe(path);
+                        ModelState.AddModelError("", Resources.Repository_Create_Failure);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, "RepoC: Failed to create repository {RepositoryName} at {RepositoryPath}", model.Name, path);
+                        DeleteRepositoryDirectoryIfSafe(path);
+                        ModelState.AddModelError("", "No se pudo crear el repositorio fisico. Revise permisos de App_Data/Repositories y el log del sistema.");
+                    }
                 }
             }
             PopulateCheckboxListData(ref model);
@@ -770,6 +780,28 @@ namespace Bonobo.Git.Server.Controllers
             }
 
             fsi.Delete();
+        }
+
+        private static void DeleteRepositoryDirectoryIfSafe(string path)
+        {
+            try
+            {
+                var root = Path.GetFullPath(UserConfiguration.Current.Repositories)
+                    .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                    + Path.DirectorySeparatorChar;
+                var target = Path.GetFullPath(path)
+                    .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                    + Path.DirectorySeparatorChar;
+
+                if (target.StartsWith(root, StringComparison.OrdinalIgnoreCase) && Directory.Exists(target))
+                {
+                    DeleteFileSystemInfo(new DirectoryInfo(target));
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "RepoC: Failed to rollback repository directory {RepositoryPath}", path);
+            }
         }
     }
 }

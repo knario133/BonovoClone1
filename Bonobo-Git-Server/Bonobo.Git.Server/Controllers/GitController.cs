@@ -127,16 +127,29 @@ namespace Bonobo.Git.Server.Controllers
             repository.Description = "Auto-created by push for " + user.DisplayName;
             repository.AnonymousAccess = false;
             repository.Administrators = new[] { user };
-            if (!RepositoryRepository.Create(repository))
+            string path = Path.Combine(UserConfiguration.Current.Repositories, repository.Name);
+            try
             {
-                // We can't add this to the repo store
-                Log.Warning("GitC: Can't create '{RepositoryName}' - RepoRepo.Create failed", repositoryName);
+                Directory.CreateDirectory(path);
+                Repository.Init(path, true);
+
+                if (!RepositoryRepository.Create(repository))
+                {
+                    // We can't add this to the repo store
+                    Log.Warning("GitC: Can't create '{RepositoryName}' - RepoRepo.Create failed", repositoryName);
+                    DeleteRepositoryDirectoryIfSafe(path);
+                    return false;
+                }
+
+                Log.Information("GitC: '{RepositoryName}' created at {RepositoryPath}", repositoryName, path);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "GitC: Can't create '{RepositoryName}' at {RepositoryPath}", repositoryName, path);
+                DeleteRepositoryDirectoryIfSafe(path);
                 return false;
             }
-
-            Repository.Init(Path.Combine(UserConfiguration.Current.Repositories, repository.Name), true);
-            Log.Information("GitC: '{RepositoryName}' created", repositoryName);
-            return true;
         }
 
 
@@ -227,12 +240,42 @@ namespace Bonobo.Git.Server.Controllers
         private static bool RepositoryIsValid(string repositoryName)
         {
             var directory = GetDirectoryInfo(repositoryName);
-            var isValid = Repository.IsValid(directory.FullName);
-            if (!isValid)
+            try
             {
-                Log.Warning("GitC: Invalid repo {RepositoryName}", repositoryName);
+                var isValid = Repository.IsValid(directory.FullName);
+                if (!isValid)
+                {
+                    Log.Warning("GitC: Invalid repo {RepositoryName} at {RepositoryPath}", repositoryName, directory.FullName);
+                }
+                return isValid;
             }
-            return isValid;
+            catch (Exception ex)
+            {
+                Log.Error(ex, "GitC: Failed to validate repo {RepositoryName} at {RepositoryPath}", repositoryName, directory.FullName);
+                return false;
+            }
+        }
+
+        private static void DeleteRepositoryDirectoryIfSafe(string path)
+        {
+            try
+            {
+                var root = Path.GetFullPath(UserConfiguration.Current.Repositories)
+                    .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                    + Path.DirectorySeparatorChar;
+                var target = Path.GetFullPath(path)
+                    .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                    + Path.DirectorySeparatorChar;
+
+                if (target.StartsWith(root, StringComparison.OrdinalIgnoreCase) && Directory.Exists(target))
+                {
+                    Directory.Delete(target, true);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "GitC: Failed to rollback repository directory {RepositoryPath}", path);
+            }
         }
 
         private Stream GetInputStream(bool disableBuffer = false)

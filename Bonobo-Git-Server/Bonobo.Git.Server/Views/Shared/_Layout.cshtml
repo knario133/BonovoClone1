@@ -473,7 +473,8 @@
         body.Repository .sidebar-nav .repository,
         body.Account .sidebar-nav .users,
         body.Team .sidebar-nav .teams,
-        body.Settings .sidebar-nav .settings {
+        body.Settings .sidebar-nav .settings,
+        body.SystemLogs .sidebar-nav .logs {
             color: #ffffff;
             background: rgba(59, 130, 246, 0.24);
             border-color: rgba(96, 165, 250, 0.34);
@@ -1936,6 +1937,12 @@
                                 <span>@Resources.Layout_AdministrationGlobalSettings</span>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("Index", "SystemLogs")" class="nav-link logs">
+                                <i class="fa-solid fa-file-lines"></i>
+                                <span>Logs</span>
+                            </a>
+                        </li>
                     }
                 </ul>
 
@@ -2549,11 +2556,23 @@
                         return;
                     }
 
+                    if (form.checkValidity && !form.checkValidity()) {
+                        hideLoader();
+                        return;
+                    }
+
                     showLoader();
                 }, true);
 
+                document.addEventListener("invalid", hideLoader, true);
+                window.addEventListener("error", hideLoader);
+                window.addEventListener("unhandledrejection", hideLoader);
                 window.addEventListener("pageshow", hideLoader);
                 window.addEventListener("pagehide", showLoader);
+
+                if (document.querySelector(".validation-summary-errors, .field-validation-error")) {
+                    hideLoader();
+                }
             }
 
             function pullBackground() {
@@ -2696,10 +2715,22 @@
                         return;
                     }
 
+                    if (event.target && event.target.checkValidity && !event.target.checkValidity()) {
+                        hide();
+                        return;
+                    }
+
                     show();
                 }, true);
 
+                document.addEventListener("invalid", hide, true);
+                window.addEventListener("error", hide);
+                window.addEventListener("unhandledrejection", hide);
                 window.addEventListener("pageshow", hide);
+
+                if (document.querySelector(".validation-summary-errors, .field-validation-error")) {
+                    hide();
+                }
             }
         })();
     </script>

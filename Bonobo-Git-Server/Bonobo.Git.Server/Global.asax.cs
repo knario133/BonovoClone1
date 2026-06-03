@@ -13,6 +13,8 @@ using Bonobo.Git.Server.Security;
 using Serilog;
 using System;
 using System.Configuration;
+using System.Data.Common;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -100,6 +102,8 @@ namespace Bonobo.Git.Server
                 }
             }
 
+            LogStartupDiagnostics(connectionstring);
+
             try
             {
                 AntiForgeryConfig.UniqueClaimTypeIdentifier = ClaimTypes.NameIdentifier;
@@ -135,6 +139,105 @@ namespace Bonobo.Git.Server
             }
 
             Directory.CreateDirectory(physicalPath);
+        }
+
+        private static void LogStartupDiagnostics(ConnectionStringSettings connectionstring)
+        {
+            LogDirectoryStatus("Repositories", UserConfiguration.Current.Repositories);
+            LogDirectoryStatus("Logs", ConfigurationManager.AppSettings["LogDirectory"] ?? @"~\App_Data\Logs");
+            LogDirectoryStatus("Recovery", ConfigurationManager.AppSettings["RecoveryDataPath"]);
+            LogDatabaseConnectionDiagnostics(connectionstring);
+        }
+
+        private static void LogDirectoryStatus(string name, string configuredPath)
+        {
+            if (string.IsNullOrWhiteSpace(configuredPath))
+            {
+                Log.Information("Startup diagnostics: {DirectoryName} directory is not configured", name);
+                return;
+            }
+
+            var physicalPath = GetRootPath(configuredPath);
+            var exists = Directory.Exists(physicalPath);
+            Log.Information("Startup diagnostics: {DirectoryName} directory Path={DirectoryPath} Exists={Exists}", name, physicalPath, exists);
+
+            if (!exists)
+            {
+                return;
+            }
+
+            try
+            {
+                var probe = Path.Combine(physicalPath, ".bonobo-write-test-" + Guid.NewGuid().ToString("N") + ".tmp");
+                File.WriteAllText(probe, DateTime.UtcNow.ToString("o"));
+                File.Delete(probe);
+                Log.Information("Startup diagnostics: {DirectoryName} directory write probe succeeded", name);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Startup diagnostics: {DirectoryName} directory write probe failed at {DirectoryPath}", name, physicalPath);
+            }
+        }
+
+        private static void LogDatabaseConnectionDiagnostics(ConnectionStringSettings connectionstring)
+        {
+            if (connectionstring == null)
+            {
+                return;
+            }
+
+            var builder = new DbConnectionStringBuilder();
+            object pooling = null;
+            object minPoolSize = null;
+            object maxPoolSize = null;
+            object dataSource = null;
+
+            try
+            {
+                builder.ConnectionString = connectionstring.ConnectionString;
+                builder.TryGetValue("Pooling", out pooling);
+                builder.TryGetValue("Min Pool Size", out minPoolSize);
+                builder.TryGetValue("Max Pool Size", out maxPoolSize);
+                builder.TryGetValue("Data Source", out dataSource);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Startup diagnostics: failed to parse DB connection string for provider {ProviderName}", connectionstring.ProviderName);
+            }
+
+            Log.Information(
+                "Startup diagnostics: DB provider={ProviderName} pooling={Pooling} minPoolSize={MinPoolSize} maxPoolSize={MaxPoolSize} dataSource={DataSource}",
+                connectionstring.ProviderName,
+                pooling ?? "(provider default)",
+                minPoolSize ?? "(provider default)",
+                maxPoolSize ?? "(provider default)",
+                dataSource ?? "(not specified)");
+
+            try
+            {
+                var factory = DbProviderFactories.GetFactory(connectionstring.ProviderName);
+                using (var connection = factory.CreateConnection())
+                {
+                    if (connection == null)
+                    {
+                        Log.Warning("Startup diagnostics: provider {ProviderName} returned a null connection", connectionstring.ProviderName);
+                        return;
+                    }
+
+                    connection.ConnectionString = connectionstring.ConnectionString;
+                    var stopwatch = Stopwatch.StartNew();
+                    connection.Open();
+                    stopwatch.Stop();
+                    Log.Information(
+                        "Startup diagnostics: DB connection opened State={ConnectionState} OpenElapsedMs={OpenElapsedMs}",
+                        connection.State,
+                        stopwatch.ElapsedMilliseconds);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Startup diagnostics: DB connection probe failed for provider {ProviderName}", connectionstring.ProviderName);
+            }
         }
 
         private void ConfigureLogging()

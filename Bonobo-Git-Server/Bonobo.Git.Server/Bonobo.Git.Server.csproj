@@ -435,6 +435,7 @@
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\RepositoryController.cs" />
     <Compile Include="Controllers\SettingsController.cs" />
+    <Compile Include="Controllers\SystemLogsController.cs" />
     <Compile Include="Controllers\TeamController.cs" />
     <Compile Include="Data\BonoboGitServerContext.cs" />
     <Compile Include="Data\Mapping\RepositoryMap.cs" />
@@ -806,6 +807,7 @@
     <Content Include="Views\Account\Detail.cshtml" />
     <Content Include="Views\Account\Edit.cshtml" />
     <Content Include="Views\Settings\Index.cshtml" />
+    <Content Include="Views\SystemLogs\Index.cshtml" />
     <Content Include="Views\Team\Detail.cshtml" />
     <Content Include="Views\Repository\Edit.cshtml" />
     <Content Include="Views\Team\Edit.cshtml" />
