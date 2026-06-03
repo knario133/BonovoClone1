@@ -8,6 +8,16 @@ namespace Bonobo.Git.Server.Configuration
     {
         public string Resolve(string path) => Path.IsPathRooted(path) ? path : HostingEnvironment.MapPath(path);
 
-        public string ResolveWithConfiguration(string configKey) => Resolve(ConfigurationManager.AppSettings[configKey]);
+        public string ResolveWithConfiguration(string configKey)
+        {
+            var configuredPath = ConfigurationManager.AppSettings[configKey];
+
+            if (configKey == "UserConfiguration" && Path.GetExtension(configuredPath) == ".xml")
+            {
+                configuredPath = Path.ChangeExtension(configuredPath, ".json");
+            }
+
+            return Resolve(configuredPath);
+        }
     }
 }

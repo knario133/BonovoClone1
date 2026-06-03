@@ -1,5 +1,5 @@
-﻿using System.IO;
-using System.Xml.Serialization;
+using System.IO;
+using Newtonsoft.Json;
 
 namespace Bonobo.Git.Server.Configuration
 {
@@ -8,7 +8,6 @@ namespace Bonobo.Git.Server.Configuration
         private static Entry _current = null;
         private static IPathResolver pathResolver = new HostingEnvironmentPathResolver();
         private static readonly object _sync = new object();
-        private static readonly XmlSerializer _serializer = new XmlSerializer(typeof(Entry));
         public static IPathResolver PathResolver { get => pathResolver; set => pathResolver = value; }
         private static string ConfigPath { get => PathResolver.ResolveWithConfiguration("UserConfiguration"); }
 
@@ -24,10 +23,8 @@ namespace Bonobo.Git.Server.Configuration
                 {
                     try
                     {
-                        using (var stream = File.Open(ConfigPath, FileMode.Open))
-                        {
-                            _current = _serializer.Deserialize(stream) as Entry;
-                        }
+                        var json = File.ReadAllText(ConfigPath);
+                        _current = JsonConvert.DeserializeObject<Entry>(json) ?? new Entry();
                     }
                     catch (FileNotFoundException)
                     {
@@ -45,10 +42,14 @@ namespace Bonobo.Git.Server.Configuration
             {
                 if (_current != null)
                 {
-                    using (var stream = File.Open(ConfigPath, FileMode.Create))
+                    var configDirectory = Path.GetDirectoryName(ConfigPath);
+                    if (!string.IsNullOrEmpty(configDirectory) && !Directory.Exists(configDirectory))
                     {
-                        _serializer.Serialize(stream, _current);
+                        Directory.CreateDirectory(configDirectory);
                     }
+
+                    var json = JsonConvert.SerializeObject(_current, Formatting.Indented);
+                    File.WriteAllText(ConfigPath, json);
                 }
             }
         }
