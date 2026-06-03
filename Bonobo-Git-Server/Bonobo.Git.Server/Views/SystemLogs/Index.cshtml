@@ -77,6 +77,8 @@
 
     .logs-viewer-actions {
         flex: 0 0 auto;
+        flex-wrap: wrap;
+        justify-content: flex-end;
         margin-left: auto;
     }
 
@@ -90,8 +92,8 @@
     }
 
     .logs-search {
-        width: min(260px, 24vw);
-        min-width: 180px;
+        width: min(210px, 18vw);
+        min-width: 150px;
         height: 36px;
         padding: 7px 10px;
         color: #e2e8f0;
@@ -107,7 +109,7 @@
     }
 
     .logs-search-count {
-        min-width: 58px;
+        min-width: 32px;
         color: rgba(203, 213, 225, 0.78);
         font-size: 0.82rem;
         text-align: right;
@@ -134,9 +136,118 @@
         text-decoration: none;
     }
 
+    .logs-filter {
+        display: inline-flex;
+        align-items: center;
+        height: 34px;
+        padding: 0 10px;
+        color: #dbeafe;
+        background: rgba(15, 23, 42, 0.66);
+        border: 1px solid rgba(148, 163, 184, 0.32);
+        border-radius: 6px;
+        font-weight: 750;
+    }
+
+    .logs-filter.active,
+    .logs-filter:hover,
+    .logs-filter:focus {
+        color: #ffffff;
+        background: rgba(59, 130, 246, 0.24);
+        border-color: rgba(96, 165, 250, 0.62);
+    }
+
+    .logs-table-wrap {
+        height: 31vh;
+        min-height: 230px;
+        overflow: auto;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.24);
+        scrollbar-color: rgba(96, 165, 250, 0.72) rgba(15, 23, 42, 0.74);
+        scrollbar-width: thin;
+    }
+
+    .logs-table {
+        width: 100%;
+        border-collapse: collapse;
+        color: #e2e8f0;
+        table-layout: fixed;
+    }
+
+    .logs-table th,
+    .logs-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+        vertical-align: top;
+    }
+
+    .logs-table th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: rgba(15, 23, 42, 0.96);
+        color: rgba(226, 232, 240, 0.84);
+        font-size: 0.78rem;
+        text-transform: uppercase;
+    }
+
+    .logs-row {
+        cursor: pointer;
+    }
+
+    .logs-row:hover,
+    .logs-row.active {
+        background: rgba(59, 130, 246, 0.14);
+    }
+
+    .logs-level {
+        display: inline-flex;
+        min-width: 74px;
+        justify-content: center;
+        padding: 3px 8px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 800;
+    }
+
+    .logs-level.error {
+        color: #fecaca;
+        background: rgba(185, 28, 28, 0.32);
+        border: 1px solid rgba(248, 113, 113, 0.38);
+    }
+
+    .logs-level.warning {
+        color: #fde68a;
+        background: rgba(180, 83, 9, 0.30);
+        border: 1px solid rgba(251, 191, 36, 0.38);
+    }
+
+    .logs-level.success {
+        color: #bbf7d0;
+        background: rgba(22, 101, 52, 0.30);
+        border: 1px solid rgba(74, 222, 128, 0.36);
+    }
+
+    .logs-message-cell {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .logs-detail-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 14px;
+        color: rgba(226, 232, 240, 0.88);
+        background: rgba(15, 23, 42, 0.48);
+        border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+        font-weight: 800;
+    }
+
     .logs-code {
         margin: 0;
-        height: min(62vh, 590px);
+        height: 29vh;
+        min-height: 220px;
         overflow: auto;
         border-radius: 0;
         background: #0b1020;
@@ -152,17 +263,20 @@
         line-height: 1.55;
     }
 
+    .logs-table-wrap::-webkit-scrollbar,
     .logs-files::-webkit-scrollbar,
     .logs-code::-webkit-scrollbar {
         width: 12px;
         height: 12px;
     }
 
+    .logs-table-wrap::-webkit-scrollbar-track,
     .logs-files::-webkit-scrollbar-track,
     .logs-code::-webkit-scrollbar-track {
         background: rgba(15, 23, 42, 0.74);
     }
 
+    .logs-table-wrap::-webkit-scrollbar-thumb,
     .logs-files::-webkit-scrollbar-thumb,
     .logs-code::-webkit-scrollbar-thumb {
         background: rgba(96, 165, 250, 0.64);
@@ -228,6 +342,10 @@
                 <span class="logs-viewer-path">@Model.LogDirectory</span>
             </div>
             <div class="logs-viewer-actions">
+                <button type="button" class="logs-filter active" data-log-filter="all">Todos</button>
+                <button type="button" class="logs-filter" data-log-filter="error">Error</button>
+                <button type="button" class="logs-filter" data-log-filter="warning">Warning</button>
+                <button type="button" class="logs-filter" data-log-filter="success">Success</button>
                 <input id="logSearch" class="logs-search" type="search" placeholder="Buscar en logs" autocomplete="off" />
                 <span id="logSearchCount" class="logs-search-count">0</span>
                 @if (!string.IsNullOrWhiteSpace(Model.SelectedFile))
@@ -238,7 +356,39 @@
                 }
             </div>
         </div>
-        <pre id="logScroll" class="logs-code"><code id="logCode" class="language-xml">@Html.Raw(Model.XmlLikeContent)</code></pre>
+        <div class="logs-table-wrap">
+            <table class="logs-table">
+                <thead>
+                    <tr>
+                        <th style="width: 210px;">Fecha</th>
+                        <th style="width: 110px;">Nivel</th>
+                        <th>Mensaje</th>
+                    </tr>
+                </thead>
+                <tbody id="logRows">
+                    @foreach (var entry in Model.Entries)
+                    {
+                        var activeClass = entry.Index == 0 ? " active" : "";
+                        <tr class="@("logs-row" + activeClass)" data-log-kind="@entry.Kind" data-log-index="@entry.Index" data-log-search="@((entry.Time + " " + entry.Level + " " + entry.Message + " " + entry.Trace).ToLowerInvariant())">
+                            <td>@entry.Time</td>
+                            <td><span class="logs-level @entry.Kind">@entry.Level</span></td>
+                            <td class="logs-message-cell">@entry.Message</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="logs-detail-header">
+            <span id="logDetailTitle">Informe completo</span>
+            <span id="logVisibleCount">@Model.Entries.Count entradas</span>
+        </div>
+        <pre id="logScroll" class="logs-code"><code id="logCode" class="language-xml">@(Model.Entries.Any() ? Html.Raw(Model.Entries.First().XmlLikeContent) : Html.Raw(Model.XmlLikeContent))</code></pre>
+        <div id="logDetails" hidden>
+            @foreach (var entry in Model.Entries)
+            {
+                <script type="text/plain" data-log-detail="@entry.Index">@Html.Raw(entry.XmlLikeContent)</script>
+            }
+        </div>
     </section>
 </div>
 
@@ -262,6 +412,11 @@
             var count = document.getElementById("logSearchCount");
             var code = document.getElementById("logCode");
             var scroller = document.getElementById("logScroll");
+            var rows = Array.prototype.slice.call(document.querySelectorAll(".logs-row"));
+            var filters = Array.prototype.slice.call(document.querySelectorAll("[data-log-filter]"));
+            var visibleCount = document.getElementById("logVisibleCount");
+            var detailTitle = document.getElementById("logDetailTitle");
+            var activeFilter = "all";
 
             function clearMarks() {
                 var marks = code.querySelectorAll("mark");
@@ -329,9 +484,78 @@
                 }
             }
 
+            function setDetail(row) {
+                var index = row.getAttribute("data-log-index");
+                var detail = document.querySelector("[data-log-detail='" + index + "']");
+                if (!detail) {
+                    return;
+                }
+
+                for (var i = 0; i < rows.length; i += 1) {
+                    rows[i].classList.remove("active");
+                }
+                row.classList.add("active");
+                code.innerHTML = detail.textContent;
+                detailTitle.textContent = row.cells[0].textContent + " · " + row.cells[1].textContent;
+
+                if (window.hljs) {
+                    if (window.hljs.highlightElement) {
+                        window.hljs.highlightElement(code);
+                    } else {
+                        window.hljs.highlightBlock(code);
+                    }
+                }
+
+                highlightTerm(search ? search.value.trim() : "");
+            }
+
+            function applyTableFilters() {
+                var term = search ? search.value.trim().toLowerCase() : "";
+                var shown = 0;
+                var firstVisible = null;
+
+                for (var i = 0; i < rows.length; i += 1) {
+                    var row = rows[i];
+                    var matchesKind = activeFilter === "all" || row.getAttribute("data-log-kind") === activeFilter;
+                    var matchesTerm = !term || row.getAttribute("data-log-search").indexOf(term) !== -1;
+                    var visible = matchesKind && matchesTerm;
+
+                    row.style.display = visible ? "" : "none";
+                    if (visible) {
+                        shown += 1;
+                        if (!firstVisible) {
+                            firstVisible = row;
+                        }
+                    }
+                }
+
+                visibleCount.textContent = shown + " entradas";
+                if (firstVisible && (!document.querySelector(".logs-row.active") || document.querySelector(".logs-row.active").style.display === "none")) {
+                    setDetail(firstVisible);
+                }
+            }
+
             if (search && code) {
                 search.addEventListener("input", function () {
+                    applyTableFilters();
                     highlightTerm(search.value.trim());
+                });
+            }
+
+            for (var i = 0; i < rows.length; i += 1) {
+                rows[i].addEventListener("click", function () {
+                    setDetail(this);
+                });
+            }
+
+            for (var j = 0; j < filters.length; j += 1) {
+                filters[j].addEventListener("click", function () {
+                    activeFilter = this.getAttribute("data-log-filter");
+                    for (var k = 0; k < filters.length; k += 1) {
+                        filters[k].classList.remove("active");
+                    }
+                    this.classList.add("active");
+                    applyTableFilters();
                 });
             }
         }());

@@ -48,6 +48,9 @@ namespace Bonobo.Git.Server.Configuration
         [JsonProperty("LinksUrl")]
         public string LinksUrl { get; set; }
 
+        [JsonProperty("CustomMenuLinks")]
+        public string CustomMenuLinks { get; set; }
+
         [JsonIgnore]
         public string Repositories => PathResolver.Resolve(RepositoryPath);
 

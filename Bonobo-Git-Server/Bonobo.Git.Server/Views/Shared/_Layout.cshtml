@@ -1905,6 +1905,43 @@
                     </div>
                 }
 
+                @{
+                    var customMenuLinks = new List<Tuple<string, string, string>>();
+                    var configuredCustomLinks = UserConfiguration.Current.CustomMenuLinks;
+                    if (!string.IsNullOrWhiteSpace(configuredCustomLinks))
+                    {
+                        foreach (var line in configuredCustomLinks.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
+                        {
+                            var parts = line.Split('|');
+                            var label = parts.Length > 0 ? parts[0].Trim() : "";
+                            var href = parts.Length > 1 ? parts[1].Trim() : "";
+                            var icon = parts.Length > 2 ? parts[2].Trim() : "fa-link";
+                            Uri absoluteUri;
+                            var isSafeLocal = href.StartsWith("/", StringComparison.Ordinal);
+                            var isSafeAbsolute = Uri.TryCreate(href, UriKind.Absolute, out absoluteUri) &&
+                                (absoluteUri.Scheme == Uri.UriSchemeHttp || absoluteUri.Scheme == Uri.UriSchemeHttps);
+
+                            if (!string.IsNullOrWhiteSpace(label) && (isSafeLocal || isSafeAbsolute))
+                            {
+                                if (!icon.StartsWith("fa ", StringComparison.OrdinalIgnoreCase) &&
+                                    !icon.StartsWith("fa-", StringComparison.OrdinalIgnoreCase) &&
+                                    !icon.StartsWith("fa-solid ", StringComparison.OrdinalIgnoreCase) &&
+                                    !icon.StartsWith("fa-brands ", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    icon = "fa-link";
+                                }
+
+                                if (icon.StartsWith("fa-", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    icon = "fa-solid " + icon;
+                                }
+
+                                customMenuLinks.Add(Tuple.Create(label, href, icon));
+                            }
+                        }
+                    }
+                }
+
                 <div class="sidebar-section-title">Navegación</div>
                 <ul class="nav nav-pills flex-column sidebar-nav">
                     @if (Request.IsAuthenticated)
@@ -1945,6 +1982,26 @@
                         </li>
                     }
                 </ul>
+
+                @if (customMenuLinks.Any())
+                {
+                    <div class="sidebar-divider"></div>
+                    <div class="sidebar-section-title">Accesos</div>
+                    <ul class="nav nav-pills flex-column sidebar-nav">
+                        @foreach (var link in customMenuLinks)
+                        {
+                            var external = link.Item2.StartsWith("http", StringComparison.OrdinalIgnoreCase);
+                            var target = external ? "_blank" : null;
+                            var rel = external ? "noopener" : null;
+                            <li class="nav-item">
+                                <a href="@Url.Content(link.Item2)" class="nav-link" target="@target" rel="@rel">
+                                    <i class="@link.Item3"></i>
+                                    <span>@link.Item1</span>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                }
 
                 <div class="sidebar-divider"></div>
                 <div class="sidebar-section-title">Sesión</div>

@@ -8,6 +8,7 @@ using Ionic.Zlib;
 using Serilog;
 using System;
 using System.IO;
+using System.Security.Principal;
 using System.Web.Mvc;
 using Unity;
 using Repository = LibGit2Sharp.Repository;
@@ -146,7 +147,18 @@ namespace Bonobo.Git.Server.Controllers
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "GitC: Can't create '{RepositoryName}' at {RepositoryPath}", repositoryName, path);
+                Log.Error(
+                    ex,
+                    "GitC: Can't create '{RepositoryName}' at {RepositoryPath}. UserId={UserId} UserName={UserName} AuthType={AuthType} RequestIdentity={RequestIdentity} ProcessIdentity={ProcessIdentity} AppPool={AppPool} AppDomainAppId={AppDomainAppId}",
+                    repositoryName,
+                    path,
+                    User.Id(),
+                    SafeValue(() => User.Identity.Name),
+                    SafeValue(() => User.Identity.AuthenticationType),
+                    SafeValue(() => Request.LogonUserIdentity.Name),
+                    SafeValue(() => WindowsIdentity.GetCurrent().Name),
+                    Environment.GetEnvironmentVariable("APP_POOL_ID") ?? "(not set)",
+                    Environment.GetEnvironmentVariable("APPDOMAINAPPID") ?? "(not set)");
                 DeleteRepositoryDirectoryIfSafe(path);
                 return false;
             }
@@ -251,7 +263,14 @@ namespace Bonobo.Git.Server.Controllers
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "GitC: Failed to validate repo {RepositoryName} at {RepositoryPath}", repositoryName, directory.FullName);
+                Log.Error(
+                    ex,
+                    "GitC: Failed to validate repo {RepositoryName} at {RepositoryPath}. ProcessIdentity={ProcessIdentity} AppPool={AppPool} AppDomainAppId={AppDomainAppId}",
+                    repositoryName,
+                    directory.FullName,
+                    SafeValue(() => WindowsIdentity.GetCurrent().Name),
+                    Environment.GetEnvironmentVariable("APP_POOL_ID") ?? "(not set)",
+                    Environment.GetEnvironmentVariable("APPDOMAINAPPID") ?? "(not set)");
                 return false;
             }
         }
@@ -289,6 +308,19 @@ namespace Bonobo.Git.Server.Controllers
             return Request.Headers["Content-Encoding"] == "gzip" ?
                 new GZipStream(requestStream, CompressionMode.Decompress) :
                 requestStream;
+        }
+
+        private static string SafeValue(Func<string> valueFactory)
+        {
+            try
+            {
+                var value = valueFactory();
+                return string.IsNullOrWhiteSpace(value) ? "(empty)" : value;
+            }
+            catch
+            {
+                return "(unavailable)";
+            }
         }
 
         protected override void OnException(ExceptionContext filterContext)

@@ -183,7 +183,18 @@ namespace Bonobo.Git.Server.Controllers
                     }
                     catch (Exception ex)
                     {
-                        Log.Error(ex, "RepoC: Failed to create repository {RepositoryName} at {RepositoryPath}", model.Name, path);
+                        Log.Error(
+                            ex,
+                            "RepoC: Failed to create repository {RepositoryName} at {RepositoryPath}. UserId={UserId} UserName={UserName} AuthType={AuthType} RequestIdentity={RequestIdentity} ProcessIdentity={ProcessIdentity} AppPool={AppPool} AppDomainAppId={AppDomainAppId}",
+                            model.Name,
+                            path,
+                            User.Id(),
+                            SafeValue(() => User.Identity.Name),
+                            SafeValue(() => User.Identity.AuthenticationType),
+                            SafeValue(() => Request.LogonUserIdentity.Name),
+                            SafeValue(() => WindowsIdentity.GetCurrent().Name),
+                            Environment.GetEnvironmentVariable("APP_POOL_ID") ?? "(not set)",
+                            Environment.GetEnvironmentVariable("APPDOMAINAPPID") ?? "(not set)");
                         DeleteRepositoryDirectoryIfSafe(path);
                         ModelState.AddModelError("", "No se pudo crear el repositorio fisico. Revise permisos de App_Data/Repositories y el log del sistema.");
                     }
@@ -801,6 +812,19 @@ namespace Bonobo.Git.Server.Controllers
             catch (Exception ex)
             {
                 Log.Warning(ex, "RepoC: Failed to rollback repository directory {RepositoryPath}", path);
+            }
+        }
+
+        private static string SafeValue(Func<string> valueFactory)
+        {
+            try
+            {
+                var value = valueFactory();
+                return string.IsNullOrWhiteSpace(value) ? "(empty)" : value;
+            }
+            catch
+            {
+                return "(unavailable)";
             }
         }
     }

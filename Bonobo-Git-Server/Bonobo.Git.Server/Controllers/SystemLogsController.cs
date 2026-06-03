@@ -25,6 +25,7 @@ namespace Bonobo.Git.Server.Controllers
             var files = GetLogFiles(logDirectory);
             var selected = SelectLogFile(files, file);
             var content = selected == null ? string.Empty : ReadLogFile(selected.FullName);
+            var entries = ParseLogEntries(content);
 
             var model = new SystemLogsViewModel
             {
@@ -36,7 +37,8 @@ namespace Bonobo.Git.Server.Controllers
                 }).ToList(),
                 SelectedFile = selected == null ? null : selected.Name,
                 LogDirectory = logDirectory,
-                XmlLikeContent = ToXmlLikeLog(content)
+                XmlLikeContent = ToXmlLikeLog(entries),
+                Entries = entries
             };
 
             return View(model);
@@ -121,12 +123,11 @@ namespace Bonobo.Git.Server.Controllers
             }
         }
 
-        private static string ToXmlLikeLog(string content)
+        private static List<SystemLogEntryViewModel> ParseLogEntries(string content)
         {
-            var builder = new StringBuilder();
-            builder.AppendLine("&lt;log&gt;");
+            var entries = new List<SystemLogEntryViewModel>();
+            SystemLogEntryViewModel current = null;
 
-            var entryOpen = false;
             using (var reader = new StringReader(content ?? string.Empty))
             {
                 string line;
@@ -135,39 +136,87 @@ namespace Bonobo.Git.Server.Controllers
                     var match = LogEntryRegex.Match(line);
                     if (match.Success)
                     {
-                        if (entryOpen)
+                        current = new SystemLogEntryViewModel
                         {
-                            builder.AppendLine("  &lt;/entry&gt;");
-                        }
-
-                        builder.Append("  &lt;entry time=\"");
-                        builder.Append(HttpUtility.HtmlEncode(match.Groups["time"].Value));
-                        if (match.Groups["level"].Success)
-                        {
-                            builder.Append("\" level=\"");
-                            builder.Append(HttpUtility.HtmlEncode(match.Groups["level"].Value));
-                        }
-                        builder.AppendLine("\"&gt;");
-                        builder.Append("    &lt;message&gt;");
-                        builder.Append(HttpUtility.HtmlEncode(match.Groups["message"].Value));
-                        builder.AppendLine("&lt;/message&gt;");
-                        entryOpen = true;
+                            Index = entries.Count,
+                            Time = match.Groups["time"].Value,
+                            Level = match.Groups["level"].Success ? match.Groups["level"].Value : "Information",
+                            Message = match.Groups["message"].Value,
+                            TraceLines = new List<string>()
+                        };
+                        current.Kind = GetEntryKind(current.Level, current.Message);
+                        entries.Add(current);
                     }
-                    else if (entryOpen)
+                    else if (current != null)
                     {
-                        builder.Append("    &lt;trace&gt;");
-                        builder.Append(HttpUtility.HtmlEncode(line));
-                        builder.AppendLine("&lt;/trace&gt;");
+                        current.TraceLines.Add(line);
                     }
                 }
             }
 
-            if (entryOpen)
+            foreach (var entry in entries)
             {
-                builder.AppendLine("  &lt;/entry&gt;");
+                entry.Trace = string.Join(Environment.NewLine, entry.TraceLines ?? new List<string>());
+                entry.XmlLikeContent = ToXmlLikeEntry(entry, indent: string.Empty);
+            }
+
+            return entries;
+        }
+
+        private static string GetEntryKind(string level, string message)
+        {
+            if (string.Equals(level, "Error", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(level, "Fatal", StringComparison.OrdinalIgnoreCase))
+            {
+                return "error";
+            }
+
+            if (string.Equals(level, "Warning", StringComparison.OrdinalIgnoreCase))
+            {
+                return "warning";
+            }
+
+            return "success";
+        }
+
+        private static string ToXmlLikeLog(IEnumerable<SystemLogEntryViewModel> entries)
+        {
+            var builder = new StringBuilder();
+            builder.AppendLine("&lt;log&gt;");
+
+            foreach (var entry in entries)
+            {
+                builder.Append(ToXmlLikeEntry(entry, indent: "  "));
             }
 
             builder.AppendLine("&lt;/log&gt;");
+            return builder.ToString();
+        }
+
+        private static string ToXmlLikeEntry(SystemLogEntryViewModel entry, string indent)
+        {
+            var builder = new StringBuilder();
+            builder.Append(indent);
+            builder.Append("&lt;entry time=\"");
+            builder.Append(HttpUtility.HtmlEncode(entry.Time));
+            builder.Append("\" level=\"");
+            builder.Append(HttpUtility.HtmlEncode(entry.Level));
+            builder.AppendLine("\"&gt;");
+            builder.Append(indent);
+            builder.Append("  &lt;message&gt;");
+            builder.Append(HttpUtility.HtmlEncode(entry.Message));
+            builder.AppendLine("&lt;/message&gt;");
+
+            foreach (var line in entry.TraceLines ?? new List<string>())
+            {
+                builder.Append(indent);
+                builder.Append("  &lt;trace&gt;");
+                builder.Append(HttpUtility.HtmlEncode(line));
+                builder.AppendLine("&lt;/trace&gt;");
+            }
+
+            builder.Append(indent);
+            builder.AppendLine("&lt;/entry&gt;");
             return builder.ToString();
         }
     }
@@ -178,6 +227,7 @@ namespace Bonobo.Git.Server.Controllers
         public string SelectedFile { get; set; }
         public string LogDirectory { get; set; }
         public string XmlLikeContent { get; set; }
+        public List<SystemLogEntryViewModel> Entries { get; set; }
     }
 
     public class SystemLogFileViewModel
@@ -185,5 +235,17 @@ namespace Bonobo.Git.Server.Controllers
         public string Name { get; set; }
         public DateTime LastWriteTime { get; set; }
         public long Length { get; set; }
+    }
+
+    public class SystemLogEntryViewModel
+    {
+        public int Index { get; set; }
+        public string Time { get; set; }
+        public string Level { get; set; }
+        public string Kind { get; set; }
+        public string Message { get; set; }
+        public List<string> TraceLines { get; set; }
+        public string Trace { get; set; }
+        public string XmlLikeContent { get; set; }
     }
 }

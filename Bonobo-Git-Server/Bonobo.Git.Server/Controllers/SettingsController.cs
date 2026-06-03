@@ -33,6 +33,7 @@ namespace Bonobo.Git.Server.Controllers
                 IsCommitAuthorAvatarVisible = UserConfiguration.Current.IsCommitAuthorAvatarVisible,
                 LinksRegex = UserConfiguration.Current.LinksRegex,
                 LinksUrl = UserConfiguration.Current.LinksUrl,
+                CustomMenuLinks = UserConfiguration.Current.CustomMenuLinks,
             });
         }
 
@@ -67,6 +68,7 @@ namespace Bonobo.Git.Server.Controllers
                         UserConfiguration.Current.IsCommitAuthorAvatarVisible = model.IsCommitAuthorAvatarVisible;
                         UserConfiguration.Current.LinksRegex = model.LinksRegex;
                         UserConfiguration.Current.LinksUrl = model.LinksUrl;
+                        UserConfiguration.Current.CustomMenuLinks = model.CustomMenuLinks;
                         UserConfiguration.Current.Save();
 
                         this.Session["Culture"] = new CultureInfo(model.DefaultLanguage);
