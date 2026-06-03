@@ -474,7 +474,8 @@
         body.Account .sidebar-nav .users,
         body.Team .sidebar-nav .teams,
         body.Settings .sidebar-nav .settings,
-        body.SystemLogs .sidebar-nav .logs {
+        body.SystemLogs .sidebar-nav .logs,
+        body.CustomMenuLinks .sidebar-nav .custom-menu-links {
             color: #ffffff;
             background: rgba(59, 130, 246, 0.24);
             border-color: rgba(96, 165, 250, 0.34);
@@ -1906,40 +1907,9 @@
                 }
 
                 @{
-                    var customMenuLinks = new List<Tuple<string, string, string>>();
-                    var configuredCustomLinks = UserConfiguration.Current.CustomMenuLinks;
-                    if (!string.IsNullOrWhiteSpace(configuredCustomLinks))
-                    {
-                        foreach (var line in configuredCustomLinks.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
-                        {
-                            var parts = line.Split('|');
-                            var label = parts.Length > 0 ? parts[0].Trim() : "";
-                            var href = parts.Length > 1 ? parts[1].Trim() : "";
-                            var icon = parts.Length > 2 ? parts[2].Trim() : "fa-link";
-                            Uri absoluteUri;
-                            var isSafeLocal = href.StartsWith("/", StringComparison.Ordinal);
-                            var isSafeAbsolute = Uri.TryCreate(href, UriKind.Absolute, out absoluteUri) &&
-                                (absoluteUri.Scheme == Uri.UriSchemeHttp || absoluteUri.Scheme == Uri.UriSchemeHttps);
-
-                            if (!string.IsNullOrWhiteSpace(label) && (isSafeLocal || isSafeAbsolute))
-                            {
-                                if (!icon.StartsWith("fa ", StringComparison.OrdinalIgnoreCase) &&
-                                    !icon.StartsWith("fa-", StringComparison.OrdinalIgnoreCase) &&
-                                    !icon.StartsWith("fa-solid ", StringComparison.OrdinalIgnoreCase) &&
-                                    !icon.StartsWith("fa-brands ", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    icon = "fa-link";
-                                }
-
-                                if (icon.StartsWith("fa-", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    icon = "fa-solid " + icon;
-                                }
-
-                                customMenuLinks.Add(Tuple.Create(label, href, icon));
-                            }
-                        }
-                    }
+                    var customMenuLinks = UserConfiguration.Current.ParsedCustomMenuLinks
+                        .Where(x => x.IsVisibleTo(User))
+                        .ToList();
                 }
 
                 <div class="sidebar-section-title">Navegación</div>
@@ -1980,6 +1950,12 @@
                                 <span>Logs</span>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("Index", "CustomMenuLinks")" class="nav-link custom-menu-links">
+                                <i class="fa-solid fa-link"></i>
+                                <span>Menu Links</span>
+                            </a>
+                        </li>
                     }
                 </ul>
 
@@ -1990,13 +1966,13 @@
                     <ul class="nav nav-pills flex-column sidebar-nav">
                         @foreach (var link in customMenuLinks)
                         {
-                            var external = link.Item2.StartsWith("http", StringComparison.OrdinalIgnoreCase);
+                            var external = link.Url.StartsWith("http", StringComparison.OrdinalIgnoreCase);
                             var target = external ? "_blank" : null;
                             var rel = external ? "noopener" : null;
                             <li class="nav-item">
-                                <a href="@Url.Content(link.Item2)" class="nav-link" target="@target" rel="@rel">
-                                    <i class="@link.Item3"></i>
-                                    <span>@link.Item1</span>
+                                <a href="@Url.Content(link.Url)" class="nav-link" target="@target" rel="@rel">
+                                    <i class="@link.GetIconClass()"></i>
+                                    <span>@link.Title</span>
                                 </a>
                             </li>
                         }
@@ -2180,6 +2156,50 @@
                         }
                     });
                 });
+            }
+
+            function initSweetAlertConfirmations() {
+                if (!window.Swal) {
+                    return;
+                }
+
+                document.addEventListener("submit", function (event) {
+                    var form = event.target;
+                    var action = (form.getAttribute("action") || "").toLowerCase();
+                    var requiresConfirmation = form.hasAttribute("data-confirm") || action.indexOf("/delete") !== -1;
+
+                    if (!requiresConfirmation || form.dataset.confirmed === "true") {
+                        return;
+                    }
+
+                    event.preventDefault();
+
+                    Swal.fire({
+                        icon: "warning",
+                        title: form.getAttribute("data-confirm") || "Confirmar acción",
+                        text: form.getAttribute("data-confirm-text") || "Esta operación no se puede deshacer.",
+                        showCancelButton: true,
+                        confirmButtonText: form.getAttribute("data-confirm-button") || "Confirmar",
+                        cancelButtonText: "Cancelar",
+                        confirmButtonColor: "#dc2626"
+                    }).then(function (result) {
+                        if (!result.isConfirmed) {
+                            if (window.BonoboPageLoader && window.BonoboPageLoader.hide) {
+                                window.BonoboPageLoader.hide(true);
+                            }
+
+                            return;
+                        }
+
+                        form.dataset.confirmed = "true";
+
+                        if (window.BonoboPageLoader && window.BonoboPageLoader.show) {
+                            window.BonoboPageLoader.show();
+                        }
+
+                        form.submit();
+                    });
+                }, true);
             }
 
             function initSystemToastr() {
@@ -2613,6 +2633,14 @@
                         return;
                     }
 
+                    var action = (form.getAttribute("action") || "").toLowerCase();
+                    var pendingConfirmation = (form.hasAttribute("data-confirm") || action.indexOf("/delete") !== -1) &&
+                        form.dataset.confirmed !== "true";
+
+                    if (pendingConfirmation) {
+                        return;
+                    }
+
                     if (form.checkValidity && !form.checkValidity()) {
                         hideLoader();
                         return;
@@ -2672,6 +2700,7 @@
                 applyBootstrapFormClasses();
                 applyOutlineButtons();
                 enhanceTables();
+                initSweetAlertConfirmations();
                 initSystemToastr();
                 pullBackground();
             }

@@ -436,6 +436,7 @@
     <Compile Include="Controllers\RepositoryController.cs" />
     <Compile Include="Controllers\SettingsController.cs" />
     <Compile Include="Controllers\SystemLogsController.cs" />
+    <Compile Include="Controllers\CustomMenuLinksController.cs" />
     <Compile Include="Controllers\TeamController.cs" />
     <Compile Include="Data\BonoboGitServerContext.cs" />
     <Compile Include="Data\Mapping\RepositoryMap.cs" />
@@ -472,6 +473,7 @@
     <Compile Include="Helpers\CustomHtmlHelpers.cs" />
     <Compile Include="Helpers\PathEncoder.cs" />
     <Compile Include="Models\HomeModels.cs" />
+    <Compile Include="Models\CustomMenuLinkModels.cs" />
     <Compile Include="Models\RepositoryModels.cs" />
     <Compile Include="Models\SettingsModels.cs" />
     <Compile Include="Models\TeamModels.cs" />
@@ -808,6 +810,7 @@
     <Content Include="Views\Account\Edit.cshtml" />
     <Content Include="Views\Settings\Index.cshtml" />
     <Content Include="Views\SystemLogs\Index.cshtml" />
+    <Content Include="Views\CustomMenuLinks\Index.cshtml" />
     <Content Include="Views\Team\Detail.cshtml" />
     <Content Include="Views\Repository\Edit.cshtml" />
     <Content Include="Views\Team\Edit.cshtml" />

@@ -53,8 +53,5 @@ namespace Bonobo.Git.Server.Models
         [Display(ResourceType = typeof(Resources), Name = "Settings_Global_LinksRegex")]
         public string LinksRegex { get; set; }
 
-        [AllowHtml]
-        [Display(Name = "Links personalizados del menú")]
-        public string CustomMenuLinks { get; set; }
     }
 }

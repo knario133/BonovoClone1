@@ -1,0 +1,306 @@
+@model Bonobo.Git.Server.Models.CustomMenuLinksPageModel
+@using System.Linq
+@{
+    ViewBag.Title = "Links del menú";
+}
+
+<style>
+    .menu-links-toolbar {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 14px;
+    }
+
+    .menu-link-roles {
+        display: inline-flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .menu-link-role {
+        display: inline-flex;
+        padding: 3px 8px;
+        border-radius: 999px;
+        color: #dbeafe;
+        background: rgba(59, 130, 246, 0.20);
+        border: 1px solid rgba(96, 165, 250, 0.34);
+        font-size: 0.78rem;
+        font-weight: 800;
+    }
+
+    .menu-link-actions {
+        display: inline-flex;
+        justify-content: flex-end;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .menu-link-action {
+        width: 34px;
+        height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        border: 1px solid rgba(148, 163, 184, 0.34);
+        color: #dbeafe;
+        background: rgba(15, 23, 42, 0.54);
+    }
+
+    .menu-link-action:hover,
+    .menu-link-action:focus {
+        color: #ffffff;
+        border-color: rgba(96, 165, 250, 0.68);
+        background: rgba(59, 130, 246, 0.24);
+    }
+
+    .menu-link-action.danger:hover,
+    .menu-link-action.danger:focus {
+        border-color: rgba(248, 113, 113, 0.72);
+        background: rgba(185, 28, 28, 0.30);
+    }
+
+    .swal2-popup .menu-link-popup {
+        display: grid;
+        gap: 14px;
+        text-align: left;
+    }
+
+    .swal2-popup .menu-link-popup label {
+        display: grid;
+        gap: 6px;
+        color: #dbeafe;
+        font-weight: 800;
+    }
+
+    .swal2-popup .menu-link-popup input[type="text"],
+    .swal2-popup .menu-link-popup input[type="url"] {
+        width: 100%;
+        height: 40px;
+        padding: 8px 10px;
+        color: #e2e8f0;
+        background: rgba(15, 23, 42, 0.86);
+        border: 1px solid rgba(148, 163, 184, 0.36);
+        border-radius: 6px;
+    }
+
+    .swal2-popup .menu-link-role-options {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .swal2-popup .menu-link-role-options label {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        margin: 0;
+        font-weight: 750;
+    }
+</style>
+
+<h1>Links del menú</h1>
+
+@Html.AntiForgeryToken()
+
+<div class="menu-links-toolbar">
+    <button type="button" id="createMenuLink" class="pure-button pure-button-primary">
+        <i class="fa-solid fa-plus"></i> Nuevo link
+    </button>
+</div>
+
+<div class="table-glass-wrap">
+    <table id="customMenuLinksTable" class="display dataTable">
+        <thead>
+            <tr>
+                <th>Título</th>
+                <th>Link</th>
+                <th>Perfiles</th>
+                <th style="width: 110px;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var link in Model.Links)
+            {
+                var roles = link.Roles == null ? new string[0] : link.Roles;
+                <tr data-id="@link.Id" data-title="@link.Title" data-url="@link.Url" data-roles="@string.Join(",", roles)">
+                    <td>@link.Title</td>
+                    <td><a href="@Url.Content(link.Url)" target="_blank" rel="noopener">@link.Url</a></td>
+                    <td>
+                        <span class="menu-link-roles">
+                            @foreach (var role in roles)
+                            {
+                                <span class="menu-link-role">@role</span>
+                            }
+                        </span>
+                    </td>
+                    <td>
+                        <span class="menu-link-actions">
+                            <button type="button" class="menu-link-action edit-menu-link" title="Editar" aria-label="Editar">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button type="button" class="menu-link-action danger delete-menu-link" title="Eliminar" aria-label="Eliminar">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </span>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section scripts {
+    <script>
+        (function () {
+            var roles = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.AvailableRoles));
+            var token = document.querySelector("input[name='__RequestVerificationToken']").value;
+
+            if (window.jQuery && jQuery.fn && jQuery.fn.DataTable && !jQuery.fn.DataTable.isDataTable("#customMenuLinksTable")) {
+                jQuery("#customMenuLinksTable").DataTable({
+                    pageLength: 10,
+                    order: [[0, "asc"]],
+                    columnDefs: [{ orderable: false, targets: 3 }]
+                });
+            }
+
+            function selectedRolesHtml(selectedRoles) {
+                return roles.map(function (role) {
+                    var checked = selectedRoles.indexOf(role) !== -1 ? " checked" : "";
+                    return "<label><input type=\"checkbox\" class=\"swal-role\" value=\"" + role + "\"" + checked + " /> " + role + "</label>";
+                }).join("");
+            }
+
+            function openEditor(data) {
+                data = data || { id: "", title: "", url: "", roles: roles.slice() };
+
+                Swal.fire({
+                    title: data.id ? "Editar link" : "Nuevo link",
+                    html:
+                        "<div class=\"menu-link-popup\">" +
+                        "<label>Título<input id=\"swalLinkTitle\" type=\"text\" value=\"" + escapeHtml(data.title) + "\" /></label>" +
+                        "<label>Link<input id=\"swalLinkUrl\" type=\"url\" value=\"" + escapeHtml(data.url) + "\" /></label>" +
+                        "<div><strong>Perfiles</strong><div class=\"menu-link-role-options\">" + selectedRolesHtml(data.roles) + "</div></div>" +
+                        "</div>",
+                    focusConfirm: false,
+                    showCancelButton: true,
+                    confirmButtonText: "Guardar",
+                    cancelButtonText: "Cancelar",
+                    preConfirm: function () {
+                        var title = document.getElementById("swalLinkTitle").value.trim();
+                        var url = document.getElementById("swalLinkUrl").value.trim();
+                        var selected = Array.prototype.slice.call(document.querySelectorAll(".swal-role:checked")).map(function (x) { return x.value; });
+
+                        if (!title || !url) {
+                            Swal.showValidationMessage("Título y link son obligatorios.");
+                            return false;
+                        }
+
+                        if (!selected.length) {
+                            Swal.showValidationMessage("Seleccione al menos un perfil.");
+                            return false;
+                        }
+
+                        return { Id: data.id, Title: title, Url: url, Roles: selected };
+                    }
+                }).then(function (result) {
+                    if (!result.isConfirmed) {
+                        return;
+                    }
+
+                    saveLink(result.value);
+                });
+            }
+
+            function saveLink(payload) {
+                jQuery.ajax({
+                    url: "@Url.Action("Save", "CustomMenuLinks")",
+                    method: "POST",
+                    traditional: true,
+                    data: {
+                        __RequestVerificationToken: token,
+                        Id: payload.Id,
+                        Title: payload.Title,
+                        Url: payload.Url,
+                        Roles: payload.Roles
+                    }
+                }).done(function () {
+                    Swal.fire({ icon: "success", title: "Guardado", timer: 1100, showConfirmButton: false })
+                        .then(function () { window.location.reload(); });
+                }).fail(function (xhr) {
+                    var message = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : "No se pudo guardar el link.";
+                    Swal.fire({ icon: "error", title: "Error", text: message });
+                });
+            }
+
+            function deleteLink(row) {
+                Swal.fire({
+                    icon: "warning",
+                    title: "Eliminar link",
+                    text: "Esta acción quitará el acceso del menú.",
+                    showCancelButton: true,
+                    confirmButtonText: "Eliminar",
+                    cancelButtonText: "Cancelar",
+                    confirmButtonColor: "#dc2626"
+                }).then(function (result) {
+                    if (!result.isConfirmed) {
+                        return;
+                    }
+
+                    jQuery.ajax({
+                        url: "@Url.Action("Delete", "CustomMenuLinks")",
+                        method: "POST",
+                        data: {
+                            __RequestVerificationToken: token,
+                            id: row.getAttribute("data-id")
+                        }
+                    }).done(function () {
+                        Swal.fire({ icon: "success", title: "Eliminado", timer: 1000, showConfirmButton: false })
+                            .then(function () { window.location.reload(); });
+                    }).fail(function (xhr) {
+                        var message = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : "No se pudo eliminar el link.";
+                        Swal.fire({ icon: "error", title: "Error", text: message });
+                    });
+                });
+            }
+
+            function getRowData(row) {
+                return {
+                    id: row.getAttribute("data-id") || "",
+                    title: row.getAttribute("data-title") || "",
+                    url: row.getAttribute("data-url") || "",
+                    roles: (row.getAttribute("data-roles") || "").split(",").filter(Boolean)
+                };
+            }
+
+            function escapeHtml(value) {
+                return (value || "").replace(/[&<>"']/g, function (character) {
+                    return {
+                        "&": "&amp;",
+                        "<": "&lt;",
+                        ">": "&gt;",
+                        "\"": "&quot;",
+                        "'": "&#39;"
+                    }[character];
+                });
+            }
+
+            document.getElementById("createMenuLink").addEventListener("click", function () {
+                openEditor();
+            });
+
+            document.addEventListener("click", function (event) {
+                var editButton = event.target.closest && event.target.closest(".edit-menu-link");
+                var deleteButton = event.target.closest && event.target.closest(".delete-menu-link");
+
+                if (editButton) {
+                    openEditor(getRowData(editButton.closest("tr")));
+                }
+
+                if (deleteButton) {
+                    deleteLink(deleteButton.closest("tr"));
+                }
+            });
+        }());
+    </script>
+}
