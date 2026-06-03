@@ -75,6 +75,7 @@ namespace Bonobo.Git.Server
         {
             ConfigureLogging();
             Log.Information("Bonobo starting");
+            RunFirstExecutionSetup();
 
             AreaRegistration.RegisterAllAreas();
             BundleConfig.RegisterBundles(BundleTable.Bundles);
@@ -84,7 +85,13 @@ namespace Bonobo.Git.Server
             GlobalFilters.Filters.Add((AllViewsFilter)DependencyResolver.Current.GetService<AllViewsFilter>());
 
             var connectionstring = WebConfigurationManager.ConnectionStrings["BonoboGitServerContext"];
-            if (connectionstring.ProviderName.ToLowerInvariant() == "system.data.sqlite")
+            if (connectionstring == null)
+            {
+                Log.Error("Missing connection string BonoboGitServerContext.");
+                throw new ConfigurationErrorsException("Missing connection string BonoboGitServerContext.");
+            }
+
+            if (string.Equals(connectionstring.ProviderName, "system.data.sqlite", StringComparison.OrdinalIgnoreCase))
             {
                 if (!connectionstring.ConnectionString.ToLowerInvariant().Contains("binaryguid=false"))
                 {
@@ -107,6 +114,29 @@ namespace Bonobo.Git.Server
             }
         }
 
+        private static void RunFirstExecutionSetup()
+        {
+            EnsureDirectory(ConfigurationManager.AppSettings["DefaultRepositoriesDirectory"] ?? @"~\App_Data\Repositories");
+            EnsureDirectory(ConfigurationManager.AppSettings["LogDirectory"] ?? @"~\App_Data\Logs");
+            EnsureDirectory(ConfigurationManager.AppSettings["RecoveryDataPath"]);
+        }
+
+        private static void EnsureDirectory(string configuredPath)
+        {
+            if (string.IsNullOrWhiteSpace(configuredPath))
+            {
+                return;
+            }
+
+            var physicalPath = GetRootPath(configuredPath);
+            if (string.IsNullOrWhiteSpace(physicalPath))
+            {
+                throw new ConfigurationErrorsException("Unable to resolve configured path: " + configuredPath);
+            }
+
+            Directory.CreateDirectory(physicalPath);
+        }
+
         private void ConfigureLogging()
         {
             Log.Logger = new LoggerConfiguration()
@@ -122,7 +152,8 @@ namespace Bonobo.Git.Server
             {
                 logDirectory = @"~\App_Data\Logs";
             }
-            return Path.Combine(HostingEnvironment.MapPath(logDirectory), "log-{Date}.txt");
+            EnsureDirectory(logDirectory);
+            return Path.Combine(GetRootPath(logDirectory), "log-{Date}.txt");
         }
 
         private static void RegisterDependencyResolver()
@@ -296,9 +327,28 @@ namespace Bonobo.Git.Server
 
         private static string GetRootPath(string path)
         {
-            return Path.IsPathRooted(path) ?
-                path :
-                HttpContext.Current.Server.MapPath(path);
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return path;
+            }
+
+            if (Path.IsPathRooted(path))
+            {
+                return path;
+            }
+
+            var mappedPath = HostingEnvironment.MapPath(path);
+            if (!string.IsNullOrWhiteSpace(mappedPath))
+            {
+                return mappedPath;
+            }
+
+            if (HttpContext.Current != null && HttpContext.Current.Server != null)
+            {
+                return HttpContext.Current.Server.MapPath(path);
+            }
+
+            throw new ConfigurationErrorsException("Unable to map virtual path: " + path);
         }
 
     }
