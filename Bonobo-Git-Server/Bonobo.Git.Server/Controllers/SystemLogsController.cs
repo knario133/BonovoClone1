@@ -15,7 +15,7 @@ namespace Bonobo.Git.Server.Controllers
     public class SystemLogsController : Controller
     {
         private static readonly Regex LogEntryRegex = new Regex(
-            @"^(?<time>\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})\s+(?<message>.*)$",
+            @"^(?<time>\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:\s+[+-]\d{2}:\d{2})?)\s+(?:\[(?<level>[^\]]+)\]\s+)?(?<message>.*)$",
             RegexOptions.Compiled);
 
         [WebAuthorize(Roles = Definitions.Roles.Administrator)]
@@ -24,7 +24,7 @@ namespace Bonobo.Git.Server.Controllers
             var logDirectory = ResolveLogDirectory();
             var files = GetLogFiles(logDirectory);
             var selected = SelectLogFile(files, file);
-            var content = selected == null ? string.Empty : System.IO.File.ReadAllText(selected.FullName);
+            var content = selected == null ? string.Empty : ReadLogFile(selected.FullName);
 
             var model = new SystemLogsViewModel
             {
@@ -40,6 +40,20 @@ namespace Bonobo.Git.Server.Controllers
             };
 
             return View(model);
+        }
+
+        [WebAuthorize(Roles = Definitions.Roles.Administrator)]
+        public ActionResult Download(string file)
+        {
+            var logDirectory = ResolveLogDirectory();
+            var selected = SelectLogFile(GetLogFiles(logDirectory), file, allowFallback: false);
+            if (selected == null)
+            {
+                return HttpNotFound();
+            }
+
+            var stream = new FileStream(selected.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            return File(stream, "text/plain", selected.Name);
         }
 
         private static string ResolveLogDirectory()
@@ -77,7 +91,7 @@ namespace Bonobo.Git.Server.Controllers
                 .ToList();
         }
 
-        private static FileInfo SelectLogFile(IEnumerable<FileInfo> files, string file)
+        private static FileInfo SelectLogFile(IEnumerable<FileInfo> files, string file, bool allowFallback = true)
         {
             var list = files.ToList();
             if (!list.Any())
@@ -95,7 +109,16 @@ namespace Bonobo.Git.Server.Controllers
                 }
             }
 
-            return list.First();
+            return allowFallback ? list.First() : null;
+        }
+
+        private static string ReadLogFile(string path)
+        {
+            using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+            using (var reader = new StreamReader(stream, Encoding.UTF8, true))
+            {
+                return reader.ReadToEnd();
+            }
         }
 
         private static string ToXmlLikeLog(string content)
@@ -119,6 +142,11 @@ namespace Bonobo.Git.Server.Controllers
 
                         builder.Append("  &lt;entry time=\"");
                         builder.Append(HttpUtility.HtmlEncode(match.Groups["time"].Value));
+                        if (match.Groups["level"].Success)
+                        {
+                            builder.Append("\" level=\"");
+                            builder.Append(HttpUtility.HtmlEncode(match.Groups["level"].Value));
+                        }
                         builder.AppendLine("\"&gt;");
                         builder.Append("    &lt;message&gt;");
                         builder.Append(HttpUtility.HtmlEncode(match.Groups["message"].Value));
